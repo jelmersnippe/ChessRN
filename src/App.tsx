@@ -1,12 +1,17 @@
 import React from 'react';
 import {SafeAreaView, StatusBar, StyleSheet, Text} from 'react-native';
+import Grid from './components/Grid';
+import {fenToJson} from './utils/fen';
 
 const App = () => {
+    const gameState = fenToJson('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
     return (
         <>
             <StatusBar barStyle={'dark-content'}/>
             <SafeAreaView style={styles.container}>
-                <Text>ChessRN</Text>
+                <Text style={styles.title}>ChessRN</Text>
+                <Grid grid={gameState.board}/>
             </SafeAreaView>
         </>
     );
@@ -17,6 +22,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center'
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 15
     }
 });
 
