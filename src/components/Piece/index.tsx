@@ -10,6 +10,8 @@ const Piece: FunctionComponent<Props> = ({piece, interactable, selectAction, cap
         <Animated.View
             style={{
                 ...styles.piece,
+                borderColor: piece.checksKing ? 'tomato' : 'transparent',
+                borderWidth: 4,
                 transform: [
                     {translateX: piece.displayPosition.x},
                     {translateY: piece.displayPosition.y}
