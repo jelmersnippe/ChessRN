@@ -39,44 +39,121 @@ const generateFalseMovementObject = (board: BoardData) => {
 };
 
 const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = [];
+    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    for (let y = 0; y < board.length; y++) {
-        const row: Array<boolean> = [];
+    // Check to the left
+    let cellToCheck = piece.boardPosition.x - 1;
+    while (cellToCheck >= 0) {
+        const move = validateMove({x: cellToCheck, y: piece.boardPosition.y}, piece.color, board);
+        movementPossible[piece.boardPosition.y][cellToCheck] = move.valid;
 
-        for (let x = 0; x < board[y].length; x++) {
-            if (piece.boardPosition.x === x && piece.boardPosition.y === y) {
-                row.push(false);
-            } else if (piece.boardPosition.x === x || piece.boardPosition.y === y) {
-                row.push(true);
-            } else {
-                row.push(false);
-            }
+        if (!move.valid || move.capture) {
+            break;
         }
 
-        movementPossible.push(row);
+        cellToCheck--;
+    }
+
+    // Check to the right
+    cellToCheck = piece.boardPosition.x + 1;
+    while (cellToCheck < 8) {
+        const move = validateMove({x: cellToCheck, y: piece.boardPosition.y}, piece.color, board);
+        movementPossible[piece.boardPosition.y][cellToCheck] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
+        }
+
+        cellToCheck++;
+    }
+
+    // Check above
+    let rowToCheck = piece.boardPosition.y - 1;
+    while (rowToCheck >= 0) {
+        const move = validateMove({x: piece.boardPosition.x, y: rowToCheck}, piece.color, board);
+        movementPossible[rowToCheck][piece.boardPosition.x] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
+        }
+
+        rowToCheck--;
+    }
+
+    // Check below
+    rowToCheck = piece.boardPosition.y + 1;
+    while (rowToCheck < 8) {
+        const move = validateMove({x: piece.boardPosition.x, y: rowToCheck}, piece.color, board);
+        movementPossible[rowToCheck][piece.boardPosition.x] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
+        }
+
+        rowToCheck++;
     }
 
     return movementPossible;
 };
 
 const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = [];
+    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    for (let y = 0; y < board.length; y++) {
-        const row: Array<boolean> = [];
+    let rowToCheck = piece.boardPosition.y - 1;
+    let cellToCheck = piece.boardPosition.x - 1;
 
-        for (let x = 0; x < board[y].length; x++) {
-            if (piece.boardPosition.x === x && piece.boardPosition.y === y) {
-                row.push(false);
-            } else if (Math.abs(piece.boardPosition.x - x) === Math.abs(piece.boardPosition.y - y)) {
-                row.push(true);
-            } else {
-                row.push(false);
-            }
+    while (rowToCheck >= 0 && cellToCheck >= 0) {
+        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
+        movementPossible[rowToCheck][cellToCheck] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
         }
 
-        movementPossible.push(row);
+        rowToCheck--;
+        cellToCheck--;
+    }
+
+    rowToCheck = piece.boardPosition.y + 1;
+    cellToCheck = piece.boardPosition.x + 1;
+    while (rowToCheck < 8 && cellToCheck < 8) {
+        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
+        movementPossible[rowToCheck][cellToCheck] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
+        }
+
+        rowToCheck++;
+        cellToCheck++;
+    }
+
+    rowToCheck = piece.boardPosition.y - 1;
+    cellToCheck = piece.boardPosition.x + 1;
+    while (rowToCheck >= 0 && cellToCheck < 8) {
+        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
+        movementPossible[rowToCheck][cellToCheck] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
+        }
+
+        rowToCheck--;
+        cellToCheck++;
+    }
+
+    rowToCheck = piece.boardPosition.y + 1;
+    cellToCheck = piece.boardPosition.x - 1;
+    while (rowToCheck < 8 && cellToCheck >= 0) {
+        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
+        movementPossible[rowToCheck][cellToCheck] = move.valid;
+
+        if (!move.valid || move.capture) {
+            break;
+        }
+
+        rowToCheck++;
+        cellToCheck--;
     }
 
     return movementPossible;
@@ -92,61 +169,61 @@ const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData
 
     if (canMoveLeft) {
         if (piece.boardPosition.y + 2 < 8) {
-            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x - 1] = isValidMove({
+            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x - 1] = validateMove({
                 x: piece.boardPosition.x - 1,
                 y: piece.boardPosition.y + 2
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
         if (piece.boardPosition.y - 2 >= 0) {
-            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x - 1] = isValidMove({
+            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x - 1] = validateMove({
                 x: piece.boardPosition.x - 1,
                 y: piece.boardPosition.y - 2
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
     }
 
     if (canMoveRight) {
         if (piece.boardPosition.y + 2 < 8) {
-            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x + 1] = isValidMove({
+            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x + 1] = validateMove({
                 x: piece.boardPosition.x + 1,
                 y: piece.boardPosition.y + 2
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
         if (piece.boardPosition.y - 2 >= 0) {
-            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x + 1] = isValidMove({
+            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x + 1] = validateMove({
                 x: piece.boardPosition.x + 1,
                 y: piece.boardPosition.y - 2
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
     }
 
     if (canMoveUp) {
         if (piece.boardPosition.x + 2 < 8) {
-            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 2] = isValidMove({
+            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 2] = validateMove({
                 x: piece.boardPosition.x + 2,
                 y: piece.boardPosition.y - 1
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
         if (piece.boardPosition.x - 2 >= 0) {
-            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 2] = isValidMove({
+            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 2] = validateMove({
                 x: piece.boardPosition.x - 2,
                 y: piece.boardPosition.y - 1
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
     }
 
     if (canMoveDown) {
         if (piece.boardPosition.x + 2 < 8) {
-            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 2] = isValidMove({
+            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 2] = validateMove({
                 x: piece.boardPosition.x + 2,
                 y: piece.boardPosition.y + 1
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
         if (piece.boardPosition.x - 2 >= 0) {
-            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 2] = isValidMove({
+            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 2] = validateMove({
                 x: piece.boardPosition.x - 2,
                 y: piece.boardPosition.y + 1
-            }, piece.color, board);
+            }, piece.color, board).valid;
         }
     }
 
@@ -160,42 +237,42 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
     const canMoveRight = piece.boardPosition.x + 1 < 8;
 
     if (piece.boardPosition.y - 1 >= 0) {
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = isValidMove({
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = validateMove({
             x: piece.boardPosition.x,
             y: piece.boardPosition.y - 1
-        }, piece.color, board);
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 1] = canMoveLeft && isValidMove({
+        }, piece.color, board).valid;
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 1] = canMoveLeft && validateMove({
             x: piece.boardPosition.x - 1,
             y: piece.boardPosition.y - 1
-        }, piece.color, board);
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 1] = canMoveRight && isValidMove({
+        }, piece.color, board).valid;
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 1] = canMoveRight && validateMove({
             x: piece.boardPosition.x + 1,
             y: piece.boardPosition.y - 1
-        }, piece.color, board);
+        }, piece.color, board).valid;
     }
 
-    movementPossible[piece.boardPosition.y][piece.boardPosition.x - 1] = canMoveLeft && isValidMove({
+    movementPossible[piece.boardPosition.y][piece.boardPosition.x - 1] = canMoveLeft && validateMove({
         x: piece.boardPosition.x - 1,
         y: piece.boardPosition.y
-    }, piece.color, board);
-    movementPossible[piece.boardPosition.y][piece.boardPosition.x + 1] = canMoveRight && isValidMove({
+    }, piece.color, board).valid;
+    movementPossible[piece.boardPosition.y][piece.boardPosition.x + 1] = canMoveRight && validateMove({
         x: piece.boardPosition.x + 1,
         y: piece.boardPosition.y
-    }, piece.color, board);
+    }, piece.color, board).valid;
 
     if (piece.boardPosition.y + 1 < 8) {
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = isValidMove({
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = validateMove({
             x: piece.boardPosition.x,
             y: piece.boardPosition.y + 1
-        }, piece.color, board);
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 1] = canMoveLeft && isValidMove({
+        }, piece.color, board).valid;
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 1] = canMoveLeft && validateMove({
             x: piece.boardPosition.x - 1,
             y: piece.boardPosition.y + 1
-        }, piece.color, board);
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 1] = canMoveRight && isValidMove({
+        }, piece.color, board).valid;
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 1] = canMoveRight && validateMove({
             x: piece.boardPosition.x + 1,
             y: piece.boardPosition.y + 1
-        }, piece.color, board);
+        }, piece.color, board).valid;
     }
 
     return movementPossible;
@@ -205,18 +282,27 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
     if (piece.color === Color.BLACK && piece.boardPosition.y + 1 < 8
-        && isValidMove({x: piece.boardPosition.x, y: piece.boardPosition.y + 1}, piece.color, board)) {
+        && validateMove({x: piece.boardPosition.x, y: piece.boardPosition.y + 1}, piece.color, board).valid) {
         movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = true;
     } else if (piece.color === Color.WHITE && piece.boardPosition.y - 1 >= 0
-        && isValidMove({x: piece.boardPosition.x, y: piece.boardPosition.y - 1}, piece.color, board)) {
+        && validateMove({x: piece.boardPosition.x, y: piece.boardPosition.y - 1}, piece.color, board).valid) {
         movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = true;
     }
 
     return movementPossible;
 };
 
-const isValidMove = (position: Position, pieceColor: Color, board: BoardData): boolean => {
+const validateMove = (position: Position, pieceColor: Color, board: BoardData): {valid: boolean, capture: boolean} => {
+    if (position.x < 0 || position.x > 7 || position.y < 0 || position.y > 7) {
+        return {
+            valid: false,
+            capture: false
+        };
+    }
+
     const cellToCheck = board[position.y][position.x];
-    console.log(cellToCheck);
-    return cellToCheck === null || cellToCheck.color !== pieceColor;
+    return {
+        valid: cellToCheck === null || cellToCheck.color !== pieceColor,
+        capture: cellToCheck !== null && cellToCheck.color !== pieceColor
+    };
 };
