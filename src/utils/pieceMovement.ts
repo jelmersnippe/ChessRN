@@ -237,7 +237,18 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
             break;
         }
 
-        movementPossible[rankToCheck][piece.boardPosition.x] = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board).valid;
+        const forwardSquare = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][piece.boardPosition.x] = (forwardSquare.valid && !forwardSquare.capture);
+
+        // Check diagonals for captures
+        if (moveAmount === 1) {
+            if (piece.boardPosition.x - 1 >= 0) {
+                movementPossible[rankToCheck][piece.boardPosition.x - 1] = checkSquare({x: piece.boardPosition.x - 1, y: rankToCheck}, piece.color, board).capture;
+            }
+            if (piece.boardPosition.x + 1 < 8) {
+                movementPossible[rankToCheck][piece.boardPosition.x + 1] = checkSquare({x: piece.boardPosition.x + 1, y: rankToCheck}, piece.color, board).capture;
+            }
+        }
     }
 
     return movementPossible;
