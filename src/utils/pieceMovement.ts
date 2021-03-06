@@ -1,32 +1,34 @@
-import PieceData from '../components/Piece/PieceData';
-import {Color, PieceType} from '../constants/piece';
+import PieceData, {Position} from '../components/Piece/PieceData';
+import {BoardData, Color, PieceType} from '../constants/piece';
 
-export const calculatePossibleMoves = (piece: PieceData, grid: Array<Array<string>>): Array<Array<boolean>> => {
+type MovePossibilityData = Array<Array<boolean>>;
+
+export const calculatePossibleMoves = (piece: PieceData, board: BoardData): MovePossibilityData => {
     switch (piece.type) {
         case PieceType.KING:
-            return kingMovement(piece.boardPosition, grid);
+            return kingMovement(piece.boardPosition, board);
         case PieceType.QUEEN:
-            const orthogonalMoves = orthogonalMovement(piece.boardPosition, grid);
-            const diagonalMoves = diagonalMovement(piece.boardPosition, grid);
+            const orthogonalMoves = orthogonalMovement(piece.boardPosition, board);
+            const diagonalMoves = diagonalMovement(piece.boardPosition, board);
             return orthogonalMoves.map((row, rowIndex) => row.map((cell, cellIndex) => cell ? cell : diagonalMoves[rowIndex][cellIndex]));
         case PieceType.KNIGHT:
-            return knightMovement(piece.boardPosition, grid);
+            return knightMovement(piece.boardPosition, board);
         case PieceType.ROOK:
-            return orthogonalMovement(piece.boardPosition, grid);
+            return orthogonalMovement(piece.boardPosition, board);
         case PieceType.BISHOP:
-            return diagonalMovement(piece.boardPosition, grid);
+            return diagonalMovement(piece.boardPosition, board);
         case PieceType.PAWN:
-            return pawnMovement(piece.boardPosition, piece.color, grid);
+            return pawnMovement(piece.boardPosition, piece.color, board);
     }
 };
 
-const generateFalseMovementObject = (grid: Array<Array<string>>) => {
+const generateFalseMovementObject = (board: BoardData) => {
     const movementPossible: Array<Array<boolean>> = [];
 
-    for (let y = 0; y < grid.length; y++) {
+    for (let y = 0; y < board.length; y++) {
         const row: Array<boolean> = [];
 
-        for (let x = 0; x < grid[y].length; x++) {
+        for (let x = 0; x < board[y].length; x++) {
             row.push(false);
         }
 
@@ -36,13 +38,13 @@ const generateFalseMovementObject = (grid: Array<Array<string>>) => {
     return movementPossible;
 };
 
-const orthogonalMovement = (piecePosition: { x: number, y: number }, grid: Array<Array<string>>): Array<Array<boolean>> => {
-    const movementPossible: Array<Array<boolean>> = [];
+const orthogonalMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+    const movementPossible: MovePossibilityData = [];
 
-    for (let y = 0; y < grid.length; y++) {
+    for (let y = 0; y < board.length; y++) {
         const row: Array<boolean> = [];
 
-        for (let x = 0; x < grid[y].length; x++) {
+        for (let x = 0; x < board[y].length; x++) {
             if (piecePosition.x === x && piecePosition.y === y) {
                 row.push(false);
             } else if (piecePosition.x === x || piecePosition.y === y) {
@@ -58,13 +60,13 @@ const orthogonalMovement = (piecePosition: { x: number, y: number }, grid: Array
     return movementPossible;
 };
 
-const diagonalMovement = (piecePosition: { x: number, y: number }, grid: Array<Array<string>>): Array<Array<boolean>> => {
-    const movementPossible: Array<Array<boolean>> = [];
+const diagonalMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+    const movementPossible: MovePossibilityData = [];
 
-    for (let y = 0; y < grid.length; y++) {
+    for (let y = 0; y < board.length; y++) {
         const row: Array<boolean> = [];
 
-        for (let x = 0; x < grid[y].length; x++) {
+        for (let x = 0; x < board[y].length; x++) {
             if (piecePosition.x === x && piecePosition.y === y) {
                 row.push(false);
             } else if (Math.abs(piecePosition.x - x) === Math.abs(piecePosition.y - y)) {
@@ -80,8 +82,8 @@ const diagonalMovement = (piecePosition: { x: number, y: number }, grid: Array<A
     return movementPossible;
 };
 
-const knightMovement = (piecePosition: { x: number, y: number }, grid: Array<Array<string>>): Array<Array<boolean>> => {
-    const movementPossible: Array<Array<boolean>> = generateFalseMovementObject(grid);
+const knightMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
     const canMoveLeft = piecePosition.x - 1 >= 0;
     const canMoveRight = piecePosition.x + 1 < 8;
@@ -127,8 +129,8 @@ const knightMovement = (piecePosition: { x: number, y: number }, grid: Array<Arr
     return movementPossible;
 };
 
-const kingMovement = (piecePosition: { x: number, y: number }, grid: Array<Array<string>>): Array<Array<boolean>> => {
-    const movementPossible: Array<Array<boolean>> = generateFalseMovementObject(grid);
+const kingMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
     const canMoveLeft = piecePosition.x - 1 >= 0;
     const canMoveRight = piecePosition.x + 1 < 8;
@@ -151,8 +153,8 @@ const kingMovement = (piecePosition: { x: number, y: number }, grid: Array<Array
     return movementPossible;
 };
 
-const pawnMovement = (piecePosition: { x: number, y: number }, pieceColor: Color, grid: Array<Array<string>>): Array<Array<boolean>> => {
-    const movementPossible: Array<Array<boolean>> = generateFalseMovementObject(grid);
+const pawnMovement = (piecePosition: Position, pieceColor: Color, board: BoardData): MovePossibilityData => {
+    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
     if (pieceColor === Color.BLACK && piecePosition.y + 1 < 8) {
         movementPossible[piecePosition.y + 1][piecePosition.x] = true;

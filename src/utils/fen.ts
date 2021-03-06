@@ -48,7 +48,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
  */
 
-import {Color, PieceType} from '../constants/piece';
+import {BoardData, Color, PieceType, RowData} from '../constants/piece';
 import PieceData from '../components/Piece/PieceData';
 
 const fenPieces = {
@@ -63,14 +63,9 @@ const fenPieces = {
 export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
-    const board: Array<Array<string>> = parseFenBoard(fenElements[0]);
-    const pieces: Array<PieceData> = board.map((row, rowIndex) =>
-        row.filter((cell) => cell !== '').map((cell, cellIndex) =>
-            new PieceData(pieceToColor(cell), pieceToType(cell), {
-                x: cellIndex,
-                y: rowIndex
-            })
-        )
+    const board: BoardData = parseFenBoard(fenElements[0]);
+    const pieces: Array<PieceData | null> = board.map((row) =>
+        row.filter((cell) => cell !== null)
     ).flat(1);
     const activePlayer: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
@@ -109,27 +104,33 @@ const pieceToType = (piece: string): PieceType => {
     }
 };
 
-const parseFenBoard = (fenBoard: string): Array<Array<string>> => {
-    const board: Array<Array<string>> = [];
+const parseFenBoard = (fenBoard: string): BoardData => {
+    const board: BoardData = [];
 
     const fenRows = fenBoard.split('/');
 
+    let currentRow = 0;
     for (const fenRow of fenRows) {
-        const row: Array<string> = [];
+        const row: RowData = [];
 
+        let currentCell = 0;
         for (const cell of fenRow) {
             if (cell.toLowerCase() in fenPieces) {
-                row.push(cell);
+                row.push(new PieceData(pieceToColor(cell), pieceToType(cell), {x: currentCell, y: currentRow}));
+                currentCell++;
             } else {
                 let cellsToSkip = parseInt(cell, 10);
                 while (cellsToSkip > 0) {
-                    row.push('');
+                    row.push(null);
                     cellsToSkip--;
+                    currentCell++;
                 }
             }
+
         }
 
         board.push(row);
+        currentRow++;
     }
 
     return board;

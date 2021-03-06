@@ -6,18 +6,19 @@ import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
 import {calculatePossibleMoves} from '../../utils/pieceMovement';
+import {RowData} from '../../constants/piece';
 
-const Grid: FunctionComponent<Props> = ({grid, pieces}) => {
+const Board: FunctionComponent<Props> = ({board, pieces}) => {
     const [selectedPiece, setSelectedPiece] = useState<PieceData | undefined>(undefined);
     const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
 
     const renderRows = (): Array<JSX.Element> => {
         const rows: Array<JSX.Element> = [];
 
-        for (let i = 0; i < grid.length; i++) {
+        for (let i = 0; i < board.length; i++) {
             rows.push(
                 <View key={i} style={styles.row}>
-                    {renderSquares(i, grid[i])}
+                    {renderSquares(i, board[i])}
                 </View>
             );
         }
@@ -25,7 +26,7 @@ const Grid: FunctionComponent<Props> = ({grid, pieces}) => {
         return rows;
     };
 
-    const renderSquares = (rowIndex: number, row: Array<string>): Array<JSX.Element> => {
+    const renderSquares = (rowIndex: number, row: RowData): Array<JSX.Element> => {
         const squares: Array<JSX.Element> = [];
 
         for (let i = 0; i < row.length; i++) {
@@ -62,22 +63,28 @@ const Grid: FunctionComponent<Props> = ({grid, pieces}) => {
     };
 
     const renderPieces = () => {
-        return pieces.map((piece, index) => <Piece movementAction={(pieceToMove) => handleMovement(pieceToMove)} key={`piece${index}`} piece={piece}/>);
+        return pieces.map((piece, index) =>
+            piece &&
+            <Piece
+                key={`piece${index}`}
+                movementAction={(pieceToMove) => handleMovement(pieceToMove)}
+                piece={piece}
+            />);
     };
 
     const handleMovement = (piece: PieceData) => {
         setSelectedPiece(piece);
         console.log('piece:', piece);
-        const moves = calculatePossibleMoves(piece, grid);
+        const moves = calculatePossibleMoves(piece, board);
         setPossibleMoves(moves);
     };
 
     return (
-        <View style={styles.grid}>
+        <View style={styles.board}>
             {renderRows()}
             {renderPieces()}
         </View>
     );
 };
 
-export default Grid;
+export default Board;

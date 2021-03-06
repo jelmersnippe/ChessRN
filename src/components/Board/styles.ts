@@ -2,7 +2,7 @@ import {StyleSheet} from 'react-native';
 import theme from '../../config/theme';
 
 const styles = StyleSheet.create({
-    grid: {
+    board: {
         borderWidth: 1
     },
     row: {

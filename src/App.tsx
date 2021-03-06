@@ -1,6 +1,6 @@
 import React from 'react';
 import {SafeAreaView, StatusBar, StyleSheet, Text} from 'react-native';
-import Grid from './components/Grid';
+import Board from './components/Board';
 import {fenToJson} from './utils/fen';
 
 const App = () => {
@@ -11,7 +11,7 @@ const App = () => {
             <StatusBar barStyle={'dark-content'}/>
             <SafeAreaView style={styles.container}>
                 <Text style={styles.title}>ChessRN</Text>
-                <Grid grid={gameState.board} pieces={gameState.pieces}/>
+                <Board board={gameState.board} pieces={gameState.pieces}/>
             </SafeAreaView>
         </>
     );
