@@ -251,10 +251,24 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
             continue;
         }
 
+        /*
+            TODO: Castling
+            If neither the king nor the rook has moved yet
+            The king is not in check
+            There are no pieces between the king and the rook
+            And none of the square in between the king and the rook are under attack (can be moved to by an enemy piece)
+            The king may shift two spaces towards the rook, and the rook may jump to the opposite side of the king
+        */
+
         for (let file = piece.boardPosition.x - 1; file <= piece.boardPosition.x + 1; file++) {
             // Outside of the board
             if (file < 0 || file >= 8) {
                 continue;
+            }
+
+            if (!piece.hasMoved) {
+                validateQueenSideCastle();
+                validateKingSideCastle();
             }
 
             // Own square
@@ -270,6 +284,27 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
     }
 
     return movementPossible;
+};
+
+const validateQueenSideCastle = (piece: PieceData, board: BoardData): boolean => {
+    if (piece.hasMoved || piece.type !== PieceType.KING) {
+        return false;
+    }
+
+    const queenSideRook = board[piece.boardPosition.y][0];
+    if (!queenSideRook || queenSideRook.type !== PieceType.ROOK || queenSideRook.hasMoved) {
+        return false;
+    }
+
+    for (let file = piece.boardPosition.x; file >= 0; file--) {
+        // Check if any enemy pieces have any of these fields as a possible move
+    }
+
+    return false;
+};
+
+const validateKingSideCastle = () => {
+
 };
 
 const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
@@ -288,6 +323,11 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
         const forwardSquare = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][piece.boardPosition.x] = (forwardSquare.valid && !forwardSquare.capture);
 
+        /* TODO: En passant
+           If the pawn is on the 5th rank (4th for black)
+           and there is an enemy pawn on an adjecent file that has moved two steps in the previous turn
+           it may be captured by crossing it diagonally
+        */
         // Check diagonals for captures
         if (moveAmount === 1) {
             if (piece.boardPosition.x - 1 >= 0) {
