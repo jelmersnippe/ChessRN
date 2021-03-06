@@ -364,18 +364,9 @@ const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {
 
 export const checksKing = (piece: PieceData, pieces: Array<PieceData>): boolean => {
     const opposingKing = pieces.find((pieceToCheck) => pieceToCheck.color !== piece.color && pieceToCheck.type === PieceType.KING);
-    if (piece.type === PieceType.QUEEN && piece.color === Color.WHITE) {
-        console.log('attacking piece', piece);
-        console.log('pieces in checksKing', pieces);
-        console.log('opposing king', opposingKing);
-    }
 
     if (!opposingKing) {
         throw new Error('No king of opposing color on the board');
-    }
-
-    if (piece.type === PieceType.QUEEN && piece.color === Color.WHITE) {
-        console.log('checks king', piece.possibleMoves?.[opposingKing.boardPosition.y][opposingKing.boardPosition.x]);
     }
 
     return !!piece.possibleMoves?.[opposingKing.boardPosition.y][opposingKing.boardPosition.x];

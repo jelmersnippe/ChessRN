@@ -1,5 +1,22 @@
-import {BoardActionType, BoardActionTypes, BoardState} from './types';
-import {Color} from '../../constants/piece';
+import {BoardData, Color} from '../../constants/piece';
+import {getType, Reducer} from 'typesafe-actions';
+import {BoardActionTypes, setActiveColorAction, setBoardAction, setChecksAction, setPiecesAction} from './actions';
+import PieceData, {Position} from '../../components/Piece/PieceData';
+
+export interface BoardState {
+    board: BoardData;
+    pieces: { [key in Color]: Array<PieceData> };
+    activeColor: Color;
+    castlesAvailable: {
+        [key in Color]: {
+            queenSide: boolean;
+            kingSide: boolean;
+        }
+    };
+    enPassant?: Position;
+    checks: { [key in Color]: boolean };
+}
+
 
 const initialState: BoardState = {
     board: [],
@@ -24,25 +41,33 @@ const initialState: BoardState = {
     }
 };
 
-const boardReducer = (state = initialState, action: BoardActionTypes): BoardState => {
+const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialState, action: BoardActionTypes): BoardState => {
     console.log(action);
     switch (action.type) {
-        case BoardActionType.SET_ACTIVE_COLOR:
+        case getType(setActiveColorAction):
             return {
                 ...state,
                 activeColor: action.payload
             };
-        case BoardActionType.SET_BOARD:
+        case getType(setBoardAction):
             return {
                 ...state,
                 board: action.payload
             };
-        case BoardActionType.SET_PIECES:
+        case getType(setPiecesAction):
             return {
                 ...state,
                 pieces: {
                     ...state.pieces,
                     [action.payload.color]: action.payload.pieces
+                }
+            };
+        case getType(setChecksAction):
+            return {
+                ...state,
+                checks: {
+                    ...state.checks,
+                    ...action.payload
                 }
             };
         default:

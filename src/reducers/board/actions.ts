@@ -1,27 +1,38 @@
-import {BoardActionType, SetActiveColor, SetBoard, SetPieces} from './types';
+import {ActionType, createAction} from 'typesafe-actions';
 import {BoardData, Color} from '../../constants/piece';
 import PieceData from '../../components/Piece/PieceData';
 
-export const setActiveColor = (color: Color): SetActiveColor => {
-    return {
-        type: BoardActionType.SET_ACTIVE_COLOR,
-        payload: color
-    };
-};
+export const setActiveColorAction = createAction(
+    'SET_ACTIVE_COLOR'
+)<Color>();
 
-export const setBoard = (board: BoardData): SetBoard => {
-    return {
-        type: BoardActionType.SET_BOARD,
-        payload: [...board]
-    };
-};
+export const setBoardAction = createAction(
+    'SET_BOARD'
+)<BoardData>();
 
-export const setPieces = (pieces: Array<PieceData>, color: Color): SetPieces => {
-    return {
-        type: BoardActionType.SET_PIECES,
-        payload: {
-            color: color,
-            pieces: [...pieces.filter((piece) => piece.color === color)]
-        }
-    };
-};
+export const setPiecesAction = createAction(
+    'SET_PIECES'
+)<{
+    color: Color;
+    pieces: Array<PieceData>;
+}>();
+
+export const setChecksAction = createAction(
+    'SET_CHECKS'
+)<Partial<{ [key in Color]: boolean }>>();
+
+export const updatePossibleMovesAction = createAction(
+    'UPDATE_POSSIBLE_MOVES'
+)<void>();
+
+export const validateChecksAction = createAction(
+    'VALIDATE_CHECKS'
+)<void>();
+
+export type BoardActionTypes =
+    ActionType<typeof setActiveColorAction> |
+    ActionType<typeof setBoardAction> |
+    ActionType<typeof setPiecesAction> |
+    ActionType<typeof setChecksAction> |
+    ActionType<typeof updatePossibleMovesAction> |
+    ActionType<typeof validateChecksAction>
