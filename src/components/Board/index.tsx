@@ -1,11 +1,10 @@
-import React, {FunctionComponent, useState} from 'react';
+import React, {FunctionComponent, useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import theme from '../../config/theme';
 import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
-import {calculatePossibleMoves} from '../../utils/pieceMovement';
 import {BoardData, Color, RankData} from '../../constants/piece';
 
 const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialActiveColor}) => {
@@ -13,6 +12,12 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
     const [pieces, setPieces] = useState<Array<PieceData | null>>(initialPieces);
     const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
+
+    useEffect(() => {
+        for (const piece of pieces) {
+            piece?.calculatePossibleMoves(board);
+        }
+    }, [activeColor]);
 
     const switchActiveColor = () => {
         setActiveColor(activeColor === Color.WHITE ? Color.BLACK : Color.WHITE);
@@ -74,11 +79,14 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
             return;
         }
 
-        board[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
-        board[rank][file] = selectedPiece;
-        setBoard([...board]);
+        const updatedBoard = board;
 
-        selectedPiece?.updatePosition({x: file, y: rank});
+        updatedBoard[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
+        updatedBoard[rank][file] = selectedPiece;
+
+        selectedPiece.updatePosition({x: file, y: rank});
+
+        setBoard([...board]);
         setSelectedPiece(null);
 
         switchActiveColor();
@@ -91,16 +99,10 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
                 key={`piece${index}`}
                 piece={piece}
                 interactable={piece.color === activeColor}
-                movementAction={(pieceToMove) => handleMovement(pieceToMove)}
+                selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
                 capturable={piece.color !== activeColor && !!selectedPiece}
-                captureAction={(pieceToMove) => handleCapture(pieceToMove)}
+                captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
             />);
-    };
-
-    const handleMovement = (piece: PieceData) => {
-        setSelectedPiece(piece);
-        const moves = calculatePossibleMoves(piece, board);
-        piece.setPossibleMoves(moves);
     };
 
     const handleCapture = (pieceToCapture: PieceData) => {

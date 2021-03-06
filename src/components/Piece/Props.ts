@@ -3,7 +3,7 @@ import PieceData from './PieceData';
 export interface Props {
     piece: PieceData;
     interactable: boolean;
-    movementAction: (piece: PieceData) => void;
+    selectAction: (pieceToSelect: PieceData) => void;
     capturable: boolean;
-    captureAction: (piece: PieceData) => void;
+    captureAction: (pieceToCapture: PieceData) => void;
 }

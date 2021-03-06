@@ -1,6 +1,7 @@
 import {Animated} from 'react-native';
-import {Color, PieceType} from '../../constants/piece';
+import {BoardData, Color, PieceType} from '../../constants/piece';
 import theme from '../../config/theme';
+import {calculatePossibleMoves} from '../../utils/pieceMovement';
 
 export interface Position {
     x: number;
@@ -34,6 +35,11 @@ class PieceData {
 
     setPossibleMoves(possibleMoves: Array<Array<boolean>>) {
         this.possibleMoves = possibleMoves;
+    }
+
+    calculatePossibleMoves(board: BoardData) {
+        const moves = calculatePossibleMoves(this, board);
+        this.setPossibleMoves(moves);
     }
 }
 

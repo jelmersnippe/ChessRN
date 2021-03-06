@@ -4,7 +4,7 @@ import styles from './styles';
 import {Props} from './Props';
 import {pieceImages} from '../../constants/piece';
 
-const Piece: FunctionComponent<Props> = ({piece, interactable, movementAction, capturable, captureAction}) => {
+const Piece: FunctionComponent<Props> = ({piece, interactable, selectAction, capturable, captureAction}) => {
 
     return (
         <Animated.View
@@ -20,7 +20,7 @@ const Piece: FunctionComponent<Props> = ({piece, interactable, movementAction, c
                 style={{flex: 1}}
                 onPress={() => {
                     if (interactable) {
-                        movementAction(piece);
+                        selectAction(piece);
                     } else if (capturable) {
                         captureAction(piece);
                     }
