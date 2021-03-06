@@ -100,7 +100,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
                 piece={piece}
                 interactable={piece.color === activeColor}
                 selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
-                capturable={piece.color !== activeColor && !!selectedPiece}
+                capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.boardPosition.y][piece.boardPosition.x]}
                 captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
             />);
     };
