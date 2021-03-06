@@ -6,22 +6,38 @@ import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
 import {BoardData, Color, RankData} from '../../constants/piece';
+import {forceCheckBreak, isCheckmate, isKingChecked} from '../../utils/pieceMovement';
 
 const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialActiveColor}) => {
     const [board, setBoard] = useState<BoardData>(initialBoard);
-    const [pieces, setPieces] = useState<Array<PieceData | null>>(initialPieces);
+    const [pieces, setPieces] = useState<Array<PieceData>>(initialPieces);
     const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
     const [whiteChecked, setWhiteChecked] = useState<boolean>(false);
     const [blackChecked, setBlackChecked] = useState<boolean>(false);
+    const [winner, setWinner] = useState<Color | undefined>(undefined);
 
     useEffect(() => {
+        setWhiteChecked(false);
+        setBlackChecked(false);
         for (const piece of pieces) {
-            piece?.calculatePossibleMoves(board);
+            piece?.calculatePossibleMoves(board, pieces);
         }
-        setWhiteChecked(!!pieces.find((piece) => piece?.checksKing && piece.color === Color.BLACK));
-        setBlackChecked(!!pieces.find((piece) => piece?.checksKing && piece.color === Color.WHITE));
-    }, [activeColor]);
+        if (isKingChecked(pieces, Color.WHITE)) {
+            setWhiteChecked(true);
+            forceCheckBreak(board, pieces, Color.WHITE);
+            if (isCheckmate(pieces, Color.WHITE)) {
+                setWinner(Color.BLACK);
+            }
+        }
+        if (isKingChecked(pieces, Color.BLACK)) {
+            setBlackChecked(true);
+            forceCheckBreak(board, pieces, Color.BLACK);
+            if (isCheckmate(pieces, Color.BLACK)) {
+                setWinner(Color.WHITE);
+            }
+        }
+    }, [board]);
 
     const switchActiveColor = () => {
         setActiveColor(activeColor === Color.WHITE ? Color.BLACK : Color.WHITE);
@@ -122,6 +138,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
 
     return (
         <>
+            {winner && <Text>Winner is {winner}</Text>}
             {whiteChecked && <Text>!WHITE CHECKED!</Text>}
             {blackChecked && <Text>!BLACK CHECKED!</Text>}
             <Text>Currently playing: {activeColor === Color.WHITE ? 'white' : 'black'}</Text>

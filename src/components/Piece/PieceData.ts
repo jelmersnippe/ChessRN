@@ -38,10 +38,10 @@ class PieceData {
         this.possibleMoves = possibleMoves;
     }
 
-    calculatePossibleMoves(board: BoardData) {
+    calculatePossibleMoves(board: BoardData, pieces: Array<PieceData>) {
         const moves = calculatePossibleMoves(this, board);
         this.setPossibleMoves(moves);
-        this.checksKing = checksKing(this, board);
+        this.checksKing = checksKing(this, pieces);
     }
 }
 

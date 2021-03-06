@@ -64,9 +64,7 @@ export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
     const board: BoardData = parseFenBoard(fenElements[0]);
-    const pieces: Array<PieceData | null> = board.map((rank) =>
-        rank.filter((file) => file !== null)
-    ).flat(1);
+    const pieces: Array<PieceData> = createPiecesListFromBoard(board);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
 
@@ -81,6 +79,18 @@ export const fenToJson = (fen: string) => {
         halfMoveClock,
         fullMoveNumber
     };
+};
+
+export const createPiecesListFromBoard = (board: BoardData): Array<PieceData> => {
+    return board.map((rank) =>
+        rank.filter((file) => file !== null) as Array<PieceData>
+    ).flat(1);
+};
+
+export const createDuplicateBoard = (board: BoardData): BoardData => {
+    return board.map((rank) =>
+        rank.map((file) => file ? new PieceData(file.color, file.type, file.boardPosition) : null)
+    );
 };
 
 const pieceToColor = (piece: string) => piece === piece.toUpperCase() ? Color.WHITE : Color.BLACK;

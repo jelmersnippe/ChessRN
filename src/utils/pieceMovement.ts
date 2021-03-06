@@ -1,25 +1,71 @@
 import PieceData, {Position} from '../components/Piece/PieceData';
 import {BoardData, Color, PieceType} from '../constants/piece';
+import {createDuplicateBoard, createPiecesListFromBoard} from './fen';
 
-type MovePossibilityData = Array<Array<boolean>>;
+export type MovePossibilityData = Array<Array<boolean>>;
+
+export const forceCheckBreak = (board: BoardData, pieces: Array<PieceData>, color: Color) => {
+
+    for (const piece of pieces) {
+        if (piece.color !== color || !piece?.possibleMoves) {
+            continue;
+        }
+
+        for (let rank = 0; rank < board.length; rank++) {
+            for (let file = 0; file < board[rank].length; file++) {
+                if (!piece.possibleMoves[rank][file]) {
+                    continue;
+                }
+
+                const tempBoard = createDuplicateBoard(board);
+
+                const selectedPiece = tempBoard[piece.boardPosition.y][piece.boardPosition.x];
+                if (!selectedPiece) {
+                    continue;
+                }
+
+                selectedPiece.boardPosition = {x: file, y: rank};
+                tempBoard[rank][file] = selectedPiece;
+
+                const tempPieces = createPiecesListFromBoard(tempBoard);
+
+                for (const tempPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
+                    tempPiece?.calculatePossibleMoves(tempBoard, tempPieces);
+                }
+
+                piece.possibleMoves[rank][file] = !isKingChecked(tempPieces, piece.color);
+            }
+        }
+    }
+};
 
 export const calculatePossibleMoves = (piece: PieceData, board: BoardData): MovePossibilityData => {
+    let possibleMoves: MovePossibilityData = [];
+
     switch (piece.type) {
         case PieceType.KING:
-            return kingMovement(piece, board);
+            possibleMoves = kingMovement(piece, board);
+            break;
         case PieceType.QUEEN:
             const orthogonalMoves = orthogonalMovement(piece, board);
             const diagonalMoves = diagonalMovement(piece, board);
-            return orthogonalMoves.map((rank, rankIndex) => rank.map((file, fileIndex) => file ? file : diagonalMoves[rankIndex][fileIndex]));
+            possibleMoves = orthogonalMoves.map((rank, rankIndex) => rank.map((file, fileIndex) => file ? file : diagonalMoves[rankIndex][fileIndex]));
+            break;
         case PieceType.KNIGHT:
-            return knightMovement(piece, board);
+            possibleMoves = knightMovement(piece, board);
+            break;
         case PieceType.ROOK:
-            return orthogonalMovement(piece, board);
+            possibleMoves = orthogonalMovement(piece, board);
+            break;
         case PieceType.BISHOP:
-            return diagonalMovement(piece, board);
+            possibleMoves = diagonalMovement(piece, board);
+            break;
         case PieceType.PAWN:
-            return pawnMovement(piece, board);
+            possibleMoves = pawnMovement(piece, board);
+            break;
     }
+
+    return possibleMoves;
 };
 
 const generateFalseMovementObject = (board: BoardData) => {
@@ -243,10 +289,16 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
         // Check diagonals for captures
         if (moveAmount === 1) {
             if (piece.boardPosition.x - 1 >= 0) {
-                movementPossible[rankToCheck][piece.boardPosition.x - 1] = checkSquare({x: piece.boardPosition.x - 1, y: rankToCheck}, piece.color, board).capture;
+                movementPossible[rankToCheck][piece.boardPosition.x - 1] = checkSquare({
+                    x: piece.boardPosition.x - 1,
+                    y: rankToCheck
+                }, piece.color, board).capture;
             }
             if (piece.boardPosition.x + 1 < 8) {
-                movementPossible[rankToCheck][piece.boardPosition.x + 1] = checkSquare({x: piece.boardPosition.x + 1, y: rankToCheck}, piece.color, board).capture;
+                movementPossible[rankToCheck][piece.boardPosition.x + 1] = checkSquare({
+                    x: piece.boardPosition.x + 1,
+                    y: rankToCheck
+                }, piece.color, board).capture;
             }
         }
     }
@@ -254,7 +306,7 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
     return movementPossible;
 };
 
-const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {valid: boolean, capture: boolean} => {
+const checkSquare = (position: Position, pieceColor: Color, board: BoardData): { valid: boolean, capture: boolean } => {
     if (position.x < 0 || position.x > 7 || position.y < 0 || position.y > 7) {
         throw new Error(`Tried to validate a position outside of the board.\nRank: ${position.y}\tFile: ${position.x}`);
     }
@@ -266,16 +318,21 @@ const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {
     };
 };
 
-export const checksKing = (piece: PieceData, board: BoardData): boolean => {
-    for (let rank = 0; rank < board.length; rank++) {
-        for (let file = 0; file < board[rank].length; file++) {
-            const pieceToCheck = board[rank][file];
+export const checksKing = (piece: PieceData, pieces: Array<PieceData>): boolean => {
+    const opposingKing = pieces.find((pieceToCheck) => pieceToCheck.color !== piece.color && pieceToCheck.type === PieceType.KING);
 
-            if (pieceToCheck?.type === PieceType.KING && pieceToCheck?.color !== piece.color) {
-                return !!piece.possibleMoves?.[rank][file];
-            }
-        }
+    if (!opposingKing) {
+        throw new Error('No king of opposing color on the board');
     }
 
-    throw new Error('No king of opposing color on the board');
+    return !!piece.possibleMoves?.[opposingKing.boardPosition.y][opposingKing.boardPosition.x];
 };
+
+export const isKingChecked = (pieces: Array<PieceData>, colorToCheck: Color) => !!pieces.find((piece) => piece?.checksKing && piece.color !== colorToCheck);
+
+export const isCheckmate = (pieces: Array<PieceData>, colorToCheck: Color) =>
+    pieces.reduce((possibleMoves, piece) => {
+        return piece.color === colorToCheck ?
+            possibleMoves + (piece.possibleMoves ? piece.possibleMoves.flat(1).filter((possible) => possible).length : 0)
+            : possibleMoves;
+    }, 0) === 0;
