@@ -12,6 +12,7 @@ class PieceData {
     boardPosition: Position;
     color: Color;
     type: PieceType;
+    hasMoved: boolean = false;
 
     constructor(color: Color, type: PieceType, position: Position) {
         this.color = color;
@@ -21,6 +22,7 @@ class PieceData {
     }
 
     updatePosition(position: Position) {
+        this.hasMoved = true;
         this.boardPosition = position;
         Animated.timing(this.displayPosition, {
             toValue: {x: position.x * theme.TILE_SIZE, y: position.y * theme.TILE_SIZE},

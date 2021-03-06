@@ -44,7 +44,7 @@ const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibility
     // Check to the left
     let fileToCheck = piece.boardPosition.x - 1;
     while (fileToCheck >= 0) {
-        const move = validateMove({x: fileToCheck, y: piece.boardPosition.y}, piece.color, board);
+        const move = checkSquare({x: fileToCheck, y: piece.boardPosition.y}, piece.color, board);
         movementPossible[piece.boardPosition.y][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -57,7 +57,7 @@ const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibility
     // Check to the right
     fileToCheck = piece.boardPosition.x + 1;
     while (fileToCheck < 8) {
-        const move = validateMove({x: fileToCheck, y: piece.boardPosition.y}, piece.color, board);
+        const move = checkSquare({x: fileToCheck, y: piece.boardPosition.y}, piece.color, board);
         movementPossible[piece.boardPosition.y][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -70,7 +70,7 @@ const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibility
     // Check above
     let rankToCheck = piece.boardPosition.y - 1;
     while (rankToCheck >= 0) {
-        const move = validateMove({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
+        const move = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][piece.boardPosition.x] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -83,7 +83,7 @@ const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibility
     // Check below
     rankToCheck = piece.boardPosition.y + 1;
     while (rankToCheck < 8) {
-        const move = validateMove({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
+        const move = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][piece.boardPosition.x] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -103,7 +103,7 @@ const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityDa
     let fileToCheck = piece.boardPosition.x - 1;
 
     while (rankToCheck >= 0 && fileToCheck >= 0) {
-        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        const move = checkSquare({x: fileToCheck, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -117,7 +117,7 @@ const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityDa
     rankToCheck = piece.boardPosition.y + 1;
     fileToCheck = piece.boardPosition.x + 1;
     while (rankToCheck < 8 && fileToCheck < 8) {
-        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        const move = checkSquare({x: fileToCheck, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -131,7 +131,7 @@ const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityDa
     rankToCheck = piece.boardPosition.y - 1;
     fileToCheck = piece.boardPosition.x + 1;
     while (rankToCheck >= 0 && fileToCheck < 8) {
-        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        const move = checkSquare({x: fileToCheck, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -145,7 +145,7 @@ const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityDa
     rankToCheck = piece.boardPosition.y + 1;
     fileToCheck = piece.boardPosition.x - 1;
     while (rankToCheck < 8 && fileToCheck >= 0) {
-        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        const move = checkSquare({x: fileToCheck, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
@@ -184,7 +184,7 @@ const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData
                 continue;
             }
 
-            movementPossible[rank][file] = validateMove({
+            movementPossible[rank][file] = checkSquare({
                 x: file,
                 y: rank
             }, piece.color, board).valid;
@@ -214,7 +214,7 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
                 continue;
             }
 
-            movementPossible[rank][file] = validateMove({
+            movementPossible[rank][file] = checkSquare({
                 x: file,
                 y: rank
             }, piece.color, board).valid;
@@ -227,28 +227,30 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
 const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    if (piece.color === Color.BLACK && piece.boardPosition.y + 1 < 8
-        && validateMove({x: piece.boardPosition.x, y: piece.boardPosition.y + 1}, piece.color, board).valid) {
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = true;
-    } else if (piece.color === Color.WHITE && piece.boardPosition.y - 1 >= 0
-        && validateMove({x: piece.boardPosition.x, y: piece.boardPosition.y - 1}, piece.color, board).valid) {
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = true;
+    const squaresToCheck = piece.hasMoved ? 1 : 2;
+
+    for (let moveAmount = 1; moveAmount <= squaresToCheck; moveAmount++) {
+        const fileDelta = piece.color === Color.WHITE ? -moveAmount : moveAmount;
+        const rankToCheck = piece.boardPosition.y + fileDelta;
+
+        if (rankToCheck < 0 || rankToCheck + fileDelta >= 8) {
+            break;
+        }
+
+        movementPossible[rankToCheck][piece.boardPosition.x] = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board).valid;
     }
 
     return movementPossible;
 };
 
-const validateMove = (position: Position, pieceColor: Color, board: BoardData): {valid: boolean, capture: boolean} => {
+const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {valid: boolean, capture: boolean} => {
     if (position.x < 0 || position.x > 7 || position.y < 0 || position.y > 7) {
-        return {
-            valid: false,
-            capture: false
-        };
+        throw new Error(`Tried to validate a position outside of the board.\nRank: ${position.y}\tFile: ${position.x}`);
     }
 
-    const fileToCheck = board[position.y][position.x];
+    const squareToCheck = board[position.y][position.x];
     return {
-        valid: fileToCheck === null || fileToCheck.color !== pieceColor,
-        capture: fileToCheck !== null && fileToCheck.color !== pieceColor
+        valid: squareToCheck === null || squareToCheck.color !== pieceColor,
+        capture: squareToCheck !== null && squareToCheck.color !== pieceColor
     };
 };
