@@ -1,7 +1,7 @@
 import {combineEpics, Epic, StateObservable} from 'redux-observable';
 import {setActiveColorAction, setBoardAction, setChecksAction, validateChecksAction} from './actions';
 import {filter, map} from 'rxjs/operators';
-import {checkedStatus} from '../../utils/pieceMovement';
+import {getCheckedStatus} from '../../utils/pieceMovement';
 import {RootState} from '../../config/store';
 import {isActionOf} from 'typesafe-actions';
 import {Color} from '../../constants/piece';
@@ -29,8 +29,8 @@ const validateChecksEpic: Epic = (action$, state$: StateObservable<RootState>) =
     filter(isActionOf(validateChecksAction)),
     map(() => {
         const checks = {
-            [Color.WHITE]: checkedStatus(state$.value.board.pieces, Color.WHITE),
-            [Color.BLACK]: checkedStatus(state$.value.board.pieces, Color.BLACK)
+            [Color.WHITE]: getCheckedStatus(state$.value.board.pieces, Color.WHITE),
+            [Color.BLACK]: getCheckedStatus(state$.value.board.pieces, Color.BLACK)
         };
 
         return setChecksAction(checks);

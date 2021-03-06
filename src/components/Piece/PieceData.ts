@@ -3,6 +3,15 @@ import {BoardData, Color, PieceType} from '../../constants/piece';
 import theme from '../../config/theme';
 import {calculatePossibleMoves, checksKing, MovePossibilityData, validateMovesForCheck} from '../../utils/pieceMovement';
 
+/*
+    Material points:
+    - Pawn: 1
+    - Bishop/Knight: 3
+    - Rook: 5
+    - Queen: 9
+ */
+
+
 export interface Position {
     x: number;
     y: number;

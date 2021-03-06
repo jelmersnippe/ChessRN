@@ -6,7 +6,8 @@ export type MovePossibilityData = Array<Array<boolean>>;
 
 export enum CheckedState {
     CHECK = 'Check',
-    CHECKMATE = 'Checkmate'
+    CHECKMATE = 'Checkmate',
+    STALEMATE = 'Stalemate'
 }
 
 export const validateMovesForCheck = (piece: PieceData, board: BoardData): MovePossibilityData => {
@@ -39,7 +40,7 @@ export const validateMovesForCheck = (piece: PieceData, board: BoardData): MoveP
                 opposingPiece?.calculatePossibleMoves(tempBoard, tempPieces);
             }
 
-            possibleMoves[rank][file] = !checkedStatus(tempPieces, piece.color);
+            possibleMoves[rank][file] = !getCheckedStatus(tempPieces, piece.color);
         }
     }
 
@@ -377,18 +378,19 @@ export const checksKing = (piece: PieceData, pieces: Array<PieceData>): boolean 
     return !!piece.possibleMoves?.[opposingKing.boardPosition.y][opposingKing.boardPosition.x];
 };
 
-export const checkedStatus = (pieces: { [key in Color]: Array<PieceData> }, colorToCheck: Color): CheckedState | false => {
+export const getCheckedStatus = (pieces: { [key in Color]: Array<PieceData> }, colorToCheck: Color): CheckedState | false => {
     const oppositeColor: Color = colorToCheck === Color.WHITE ? Color.BLACK : Color.WHITE;
     const checked = !!pieces[oppositeColor].find((piece) => piece.checksKing);
+    const movesLeft = getMovesLeft(pieces[colorToCheck]);
 
-    if (!checked) {
-        return false;
+    if (movesLeft > 0) {
+        return checked ? CheckedState.CHECK : false;
     }
 
-    return movesLeft(pieces[colorToCheck]) > 0 ? CheckedState.CHECK : CheckedState.CHECKMATE;
+    return checked ? CheckedState.CHECKMATE : CheckedState.STALEMATE;
 };
 
-export const movesLeft = (pieces: Array<PieceData>) =>
+export const getMovesLeft = (pieces: Array<PieceData>) =>
     pieces.reduce((possibleMoves, piece) => {
         return possibleMoves + (piece.possibleMoves ? piece.possibleMoves.flat(1).filter((possible) => possible).length : 0);
     }, 0);
