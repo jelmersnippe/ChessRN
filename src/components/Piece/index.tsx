@@ -1,19 +1,34 @@
 import React, {FunctionComponent} from 'react';
-import {Image, View} from 'react-native';
+import {Animated, Image, TouchableOpacity} from 'react-native';
 import styles from './styles';
 import {Props} from './Props';
 import {pieceImages} from '../../constants/piece';
 
-const Piece: FunctionComponent<Props> = ({piece}) => {
+const Piece: FunctionComponent<Props> = ({piece, movementAction}) => {
 
     return (
-        <View style={styles.piece}>
-            <Image
-                style={styles.image}
-                resizeMethod={'resize'}
-                source={pieceImages[piece]}
-            />
-        </View>
+        <Animated.View
+            style={{
+                ...styles.piece,
+                transform: [
+                    {translateX: piece.displayPosition.x},
+                    {translateY: piece.displayPosition.y}
+                ]
+            }}
+        >
+            <TouchableOpacity
+                style={{flex: 1}}
+                onPress={() => {
+                    movementAction(piece);
+                }}
+            >
+                <Image
+                    style={styles.image}
+                    resizeMethod={'resize'}
+                    source={pieceImages[piece.color][piece.type]}
+                />
+            </TouchableOpacity>
+        </Animated.View>
     );
 };
 

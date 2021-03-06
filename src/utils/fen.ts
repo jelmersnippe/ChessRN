@@ -48,6 +48,9 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
  */
 
+import {Color, PieceType} from '../constants/piece';
+import PieceData from '../components/Piece/PieceData';
+
 const fenPieces = {
     p: 'Pawn',
     r: 'Rook',
@@ -57,29 +60,53 @@ const fenPieces = {
     q: 'Queen'
 };
 
-enum Player {
-    WHITE = 'w',
-    BLACK = 'b'
-}
-
 export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
     const board: Array<Array<string>> = parseFenBoard(fenElements[0]);
-    const activePlayer: Player = fenElements[1] === Player.WHITE ? Player.WHITE : Player.BLACK;
+    const pieces: Array<PieceData> = board.map((row, rowIndex) =>
+        row.filter((cell) => cell !== '').map((cell, cellIndex) =>
+            new PieceData(pieceToColor(cell), pieceToType(cell), {
+                x: cellIndex,
+                y: rowIndex
+            })
+        )
+    ).flat(1);
+    const activePlayer: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
 
     const halfMoveClock = parseInt(fenElements[4], 10);
     const fullMoveNumber = parseInt(fenElements[6], 10);
 
-    console.log(board);
     return {
         board,
+        pieces,
         activePlayer,
         castlingPossibilities,
         halfMoveClock,
         fullMoveNumber
     };
+};
+
+const pieceToColor = (piece: string) => piece === piece.toUpperCase() ? Color.WHITE : Color.BLACK;
+
+const pieceToType = (piece: string): PieceType => {
+    switch (piece.toLowerCase()) {
+        case 'k':
+            return PieceType.KING;
+        case 'q':
+            return PieceType.QUEEN;
+        case 'r':
+            return PieceType.ROOK;
+        case 'b':
+            return PieceType.BISHOP;
+        case 'n':
+            return PieceType.KNIGHT;
+        case 'p':
+            return PieceType.PAWN;
+        default:
+            throw new Error('unrecognized piece');
+    }
 };
 
 const parseFenBoard = (fenBoard: string): Array<Array<string>> => {
@@ -110,27 +137,27 @@ const parseFenBoard = (fenBoard: string): Array<Array<string>> => {
 
 const parseFenCastlingPossibilities = (fenCastlingPossibilities: string) => {
     const castlingPossibilities = {
-        [Player.WHITE]: {
+        [Color.WHITE]: {
             king: false,
             queen: false
         },
-        [Player.BLACK]: {
+        [Color.BLACK]: {
             king: false,
             queen: false
         }
     };
 
     if (fenCastlingPossibilities.includes('K')) {
-        castlingPossibilities[Player.WHITE].king = true;
+        castlingPossibilities[Color.WHITE].king = true;
     }
     if (fenCastlingPossibilities.includes('Q')) {
-        castlingPossibilities[Player.WHITE].queen = true;
+        castlingPossibilities[Color.WHITE].queen = true;
     }
     if (fenCastlingPossibilities.includes('k')) {
-        castlingPossibilities[Player.BLACK].king = true;
+        castlingPossibilities[Color.BLACK].king = true;
     }
     if (fenCastlingPossibilities.includes('q')) {
-        castlingPossibilities[Player.BLACK].queen = true;
+        castlingPossibilities[Color.BLACK].queen = true;
     }
 
     return castlingPossibilities;

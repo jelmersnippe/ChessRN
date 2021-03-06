@@ -1,3 +1,6 @@
+import PieceData from './PieceData';
+
 export interface Props {
-    piece: string;
+    piece: PieceData;
+    movementAction: (piece: PieceData) => void;
 }

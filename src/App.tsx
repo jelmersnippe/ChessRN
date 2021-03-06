@@ -11,7 +11,7 @@ const App = () => {
             <StatusBar barStyle={'dark-content'}/>
             <SafeAreaView style={styles.container}>
                 <Text style={styles.title}>ChessRN</Text>
-                <Grid grid={gameState.board}/>
+                <Grid grid={gameState.board} pieces={gameState.pieces}/>
             </SafeAreaView>
         </>
     );

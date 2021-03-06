@@ -1,13 +1,17 @@
-import React, {FunctionComponent} from 'react';
-import {View} from 'react-native';
+import React, {FunctionComponent, useState} from 'react';
+import {TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import theme from '../../config/theme';
-import Piece from '../Piece';
 import {Props} from './Props';
+import Piece from '../Piece';
+import PieceData from '../Piece/PieceData';
+import {calculatePossibleMoves} from '../../utils/pieceMovement';
 
-const Grid: FunctionComponent<Props> = ({grid}) => {
+const Grid: FunctionComponent<Props> = ({grid, pieces}) => {
+    const [selectedPiece, setSelectedPiece] = useState<PieceData | undefined>(undefined);
+    const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
 
-    const renderRows = (grid: Array<Array<string>>): Array<JSX.Element> => {
+    const renderRows = (): Array<JSX.Element> => {
         const rows: Array<JSX.Element> = [];
 
         for (let i = 0; i < grid.length; i++) {
@@ -25,25 +29,53 @@ const Grid: FunctionComponent<Props> = ({grid}) => {
         const squares: Array<JSX.Element> = [];
 
         for (let i = 0; i < row.length; i++) {
+            const isPossibleMove = possibleMoves?.[rowIndex][i];
+            const isSelectedPiece = selectedPiece?.boardPosition.x === i && selectedPiece?.boardPosition.y === rowIndex;
+
+            let backgroundColor = (i + rowIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile;
+
+            if (isPossibleMove) {
+                backgroundColor = 'sandybrown';
+            }
+            if (isSelectedPiece) {
+                backgroundColor = 'wheat';
+            }
+
             squares.push(
-                <View
+                <TouchableOpacity
+                    disabled={!selectedPiece || !isPossibleMove || isSelectedPiece}
                     key={`${rowIndex}-${i}`}
                     style={{
                         ...styles.square,
-                        backgroundColor: (i + rowIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile
+                        backgroundColor: backgroundColor
                     }}
-                >
-                    {row[i] !== '' && <Piece piece={row[i]}/>}
-                </View>
+                    onPress={() => {
+                        selectedPiece?.updatePosition({x: i, y: rowIndex});
+                        setSelectedPiece(undefined);
+                        setPossibleMoves(undefined);
+                    }}
+                />
             );
         }
 
         return squares;
     };
 
+    const renderPieces = () => {
+        return pieces.map((piece, index) => <Piece movementAction={(pieceToMove) => handleMovement(pieceToMove)} key={`piece${index}`} piece={piece}/>);
+    };
+
+    const handleMovement = (piece: PieceData) => {
+        setSelectedPiece(piece);
+        console.log('piece:', piece);
+        const moves = calculatePossibleMoves(piece, grid);
+        setPossibleMoves(moves);
+    };
+
     return (
         <View style={styles.grid}>
-            {renderRows(grid)}
+            {renderRows()}
+            {renderPieces()}
         </View>
     );
 };
