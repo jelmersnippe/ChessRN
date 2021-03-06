@@ -6,35 +6,35 @@ import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
 import {calculatePossibleMoves} from '../../utils/pieceMovement';
-import {RowData} from '../../constants/piece';
+import {RankData} from '../../constants/piece';
 
 const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
     const [board, setBoard] = useState(initialBoard);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
     const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
 
-    const renderRows = (): Array<JSX.Element> => {
-        const rows: Array<JSX.Element> = [];
+    const renderRanks = (): Array<JSX.Element> => {
+        const ranks: Array<JSX.Element> = [];
 
         for (let i = 0; i < board.length; i++) {
-            rows.push(
-                <View key={i} style={styles.row}>
+            ranks.push(
+                <View key={i} style={styles.rank}>
                     {renderSquares(i, board[i])}
                 </View>
             );
         }
 
-        return rows;
+        return ranks;
     };
 
-    const renderSquares = (rowIndex: number, row: RowData): Array<JSX.Element> => {
+    const renderSquares = (rankIndex: number, rank: RankData): Array<JSX.Element> => {
         const squares: Array<JSX.Element> = [];
 
-        for (let i = 0; i < row.length; i++) {
-            const isPossibleMove = possibleMoves?.[rowIndex][i];
-            const isSelectedPiece = selectedPiece?.boardPosition.x === i && selectedPiece?.boardPosition.y === rowIndex;
+        for (let i = 0; i < rank.length; i++) {
+            const isPossibleMove = possibleMoves?.[rankIndex][i];
+            const isSelectedPiece = selectedPiece?.boardPosition.x === i && selectedPiece?.boardPosition.y === rankIndex;
 
-            let backgroundColor = (i + rowIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile;
+            let backgroundColor = (i + rankIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile;
 
             if (isPossibleMove) {
                 backgroundColor = 'sandybrown';
@@ -46,7 +46,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
             squares.push(
                 <TouchableOpacity
                     disabled={!selectedPiece || !isPossibleMove || isSelectedPiece}
-                    key={`${rowIndex}-${i}`}
+                    key={`${rankIndex}-${i}`}
                     style={{
                         ...styles.square,
                         backgroundColor: backgroundColor
@@ -55,10 +55,10 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
                         if (selectedPiece) {
                             const updatedBoard = board;
                             updatedBoard[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
-                            updatedBoard[rowIndex][i] = selectedPiece;
+                            updatedBoard[rankIndex][i] = selectedPiece;
                             setBoard([...updatedBoard]);
 
-                            selectedPiece?.updatePosition({x: i, y: rowIndex});
+                            selectedPiece?.updatePosition({x: i, y: rankIndex});
                             setSelectedPiece(null);
                             setPossibleMoves(undefined);
                         }
@@ -90,7 +90,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
 
     return (
         <View style={styles.board}>
-            {renderRows()}
+            {renderRanks()}
             {renderPieces()}
         </View>
     );

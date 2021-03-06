@@ -1,8 +1,8 @@
 import PieceData from '../components/Piece/PieceData';
 
-export type BoardData = Array<RowData>;
+export type BoardData = Array<RankData>;
 
-export type RowData = Array<PieceData | null>
+export type RankData = Array<PieceData | null>
 
 export enum Color {
     BLACK = 'b',

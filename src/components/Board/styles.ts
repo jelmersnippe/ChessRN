@@ -5,7 +5,7 @@ const styles = StyleSheet.create({
     board: {
         borderWidth: 1
     },
-    row: {
+    rank: {
         flexDirection: 'row'
     },
     square: {

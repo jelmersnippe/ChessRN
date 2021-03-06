@@ -10,7 +10,7 @@ export const calculatePossibleMoves = (piece: PieceData, board: BoardData): Move
         case PieceType.QUEEN:
             const orthogonalMoves = orthogonalMovement(piece, board);
             const diagonalMoves = diagonalMovement(piece, board);
-            return orthogonalMoves.map((row, rowIndex) => row.map((cell, cellIndex) => cell ? cell : diagonalMoves[rowIndex][cellIndex]));
+            return orthogonalMoves.map((rank, rankIndex) => rank.map((file, fileIndex) => file ? file : diagonalMoves[rankIndex][fileIndex]));
         case PieceType.KNIGHT:
             return knightMovement(piece, board);
         case PieceType.ROOK:
@@ -26,13 +26,13 @@ const generateFalseMovementObject = (board: BoardData) => {
     const movementPossible: Array<Array<boolean>> = [];
 
     for (let y = 0; y < board.length; y++) {
-        const row: Array<boolean> = [];
+        const rank: Array<boolean> = [];
 
         for (let x = 0; x < board[y].length; x++) {
-            row.push(false);
+            rank.push(false);
         }
 
-        movementPossible.push(row);
+        movementPossible.push(rank);
     }
 
     return movementPossible;
@@ -42,55 +42,55 @@ const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibility
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
     // Check to the left
-    let cellToCheck = piece.boardPosition.x - 1;
-    while (cellToCheck >= 0) {
-        const move = validateMove({x: cellToCheck, y: piece.boardPosition.y}, piece.color, board);
-        movementPossible[piece.boardPosition.y][cellToCheck] = move.valid;
+    let fileToCheck = piece.boardPosition.x - 1;
+    while (fileToCheck >= 0) {
+        const move = validateMove({x: fileToCheck, y: piece.boardPosition.y}, piece.color, board);
+        movementPossible[piece.boardPosition.y][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        cellToCheck--;
+        fileToCheck--;
     }
 
     // Check to the right
-    cellToCheck = piece.boardPosition.x + 1;
-    while (cellToCheck < 8) {
-        const move = validateMove({x: cellToCheck, y: piece.boardPosition.y}, piece.color, board);
-        movementPossible[piece.boardPosition.y][cellToCheck] = move.valid;
+    fileToCheck = piece.boardPosition.x + 1;
+    while (fileToCheck < 8) {
+        const move = validateMove({x: fileToCheck, y: piece.boardPosition.y}, piece.color, board);
+        movementPossible[piece.boardPosition.y][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        cellToCheck++;
+        fileToCheck++;
     }
 
     // Check above
-    let rowToCheck = piece.boardPosition.y - 1;
-    while (rowToCheck >= 0) {
-        const move = validateMove({x: piece.boardPosition.x, y: rowToCheck}, piece.color, board);
-        movementPossible[rowToCheck][piece.boardPosition.x] = move.valid;
+    let rankToCheck = piece.boardPosition.y - 1;
+    while (rankToCheck >= 0) {
+        const move = validateMove({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][piece.boardPosition.x] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        rowToCheck--;
+        rankToCheck--;
     }
 
     // Check below
-    rowToCheck = piece.boardPosition.y + 1;
-    while (rowToCheck < 8) {
-        const move = validateMove({x: piece.boardPosition.x, y: rowToCheck}, piece.color, board);
-        movementPossible[rowToCheck][piece.boardPosition.x] = move.valid;
+    rankToCheck = piece.boardPosition.y + 1;
+    while (rankToCheck < 8) {
+        const move = validateMove({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][piece.boardPosition.x] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        rowToCheck++;
+        rankToCheck++;
     }
 
     return movementPossible;
@@ -99,61 +99,61 @@ const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibility
 const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    let rowToCheck = piece.boardPosition.y - 1;
-    let cellToCheck = piece.boardPosition.x - 1;
+    let rankToCheck = piece.boardPosition.y - 1;
+    let fileToCheck = piece.boardPosition.x - 1;
 
-    while (rowToCheck >= 0 && cellToCheck >= 0) {
-        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
-        movementPossible[rowToCheck][cellToCheck] = move.valid;
+    while (rankToCheck >= 0 && fileToCheck >= 0) {
+        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        rowToCheck--;
-        cellToCheck--;
+        rankToCheck--;
+        fileToCheck--;
     }
 
-    rowToCheck = piece.boardPosition.y + 1;
-    cellToCheck = piece.boardPosition.x + 1;
-    while (rowToCheck < 8 && cellToCheck < 8) {
-        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
-        movementPossible[rowToCheck][cellToCheck] = move.valid;
+    rankToCheck = piece.boardPosition.y + 1;
+    fileToCheck = piece.boardPosition.x + 1;
+    while (rankToCheck < 8 && fileToCheck < 8) {
+        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        rowToCheck++;
-        cellToCheck++;
+        rankToCheck++;
+        fileToCheck++;
     }
 
-    rowToCheck = piece.boardPosition.y - 1;
-    cellToCheck = piece.boardPosition.x + 1;
-    while (rowToCheck >= 0 && cellToCheck < 8) {
-        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
-        movementPossible[rowToCheck][cellToCheck] = move.valid;
+    rankToCheck = piece.boardPosition.y - 1;
+    fileToCheck = piece.boardPosition.x + 1;
+    while (rankToCheck >= 0 && fileToCheck < 8) {
+        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        rowToCheck--;
-        cellToCheck++;
+        rankToCheck--;
+        fileToCheck++;
     }
 
-    rowToCheck = piece.boardPosition.y + 1;
-    cellToCheck = piece.boardPosition.x - 1;
-    while (rowToCheck < 8 && cellToCheck >= 0) {
-        const move = validateMove({x: cellToCheck, y: rowToCheck}, piece.color, board);
-        movementPossible[rowToCheck][cellToCheck] = move.valid;
+    rankToCheck = piece.boardPosition.y + 1;
+    fileToCheck = piece.boardPosition.x - 1;
+    while (rankToCheck < 8 && fileToCheck >= 0) {
+        const move = validateMove({x: fileToCheck, y: rankToCheck}, piece.color, board);
+        movementPossible[rankToCheck][fileToCheck] = move.valid;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        rowToCheck++;
-        cellToCheck--;
+        rankToCheck++;
+        fileToCheck--;
     }
 
     return movementPossible;
@@ -246,9 +246,9 @@ const validateMove = (position: Position, pieceColor: Color, board: BoardData): 
         };
     }
 
-    const cellToCheck = board[position.y][position.x];
+    const fileToCheck = board[position.y][position.x];
     return {
-        valid: cellToCheck === null || cellToCheck.color !== pieceColor,
-        capture: cellToCheck !== null && cellToCheck.color !== pieceColor
+        valid: fileToCheck === null || fileToCheck.color !== pieceColor,
+        capture: fileToCheck !== null && fileToCheck.color !== pieceColor
     };
 };

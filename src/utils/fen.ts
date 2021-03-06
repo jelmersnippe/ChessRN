@@ -10,7 +10,7 @@ b = bishop
 n = knight
 p = pawn
 number = empty spaces
-/ = next row
+/ = next rank
 
 capital = white
 lowercase = black
@@ -28,8 +28,8 @@ KQkq
 4. En passant possibility
 - = not possible
 e3 =
-    row < 4 -> pawn at row +1 can be taken (black can take white)
-    row > 4 -> pawn at row-1 can be taken (white can take black)
+    rank < 4 -> pawn at rank +1 can be taken (black can take white)
+    rank > 4 -> pawn at rank-1 can be taken (white can take black)
 
 Possibility only lasts for one turn
 
@@ -48,7 +48,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
  */
 
-import {BoardData, Color, PieceType, RowData} from '../constants/piece';
+import {BoardData, Color, PieceType, RankData} from '../constants/piece';
 import PieceData from '../components/Piece/PieceData';
 
 const fenPieces = {
@@ -64,8 +64,8 @@ export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
     const board: BoardData = parseFenBoard(fenElements[0]);
-    const pieces: Array<PieceData | null> = board.map((row) =>
-        row.filter((cell) => cell !== null)
+    const pieces: Array<PieceData | null> = board.map((rank) =>
+        rank.filter((file) => file !== null)
     ).flat(1);
     const activePlayer: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
@@ -107,30 +107,30 @@ const pieceToType = (piece: string): PieceType => {
 const parseFenBoard = (fenBoard: string): BoardData => {
     const board: BoardData = [];
 
-    const fenRows = fenBoard.split('/');
+    const fenRanks = fenBoard.split('/');
 
-    let currentRow = 0;
-    for (const fenRow of fenRows) {
-        const row: RowData = [];
+    let currentRank = 0;
+    for (const fenRank of fenRanks) {
+        const rank: RankData = [];
 
-        let currentCell = 0;
-        for (const cell of fenRow) {
-            if (cell.toLowerCase() in fenPieces) {
-                row.push(new PieceData(pieceToColor(cell), pieceToType(cell), {x: currentCell, y: currentRow}));
-                currentCell++;
+        let currentFile = 0;
+        for (const file of fenRank) {
+            if (file.toLowerCase() in fenPieces) {
+                rank.push(new PieceData(pieceToColor(file), pieceToType(file), {x: currentFile, y: currentRank}));
+                currentFile++;
             } else {
-                let cellsToSkip = parseInt(cell, 10);
-                while (cellsToSkip > 0) {
-                    row.push(null);
-                    cellsToSkip--;
-                    currentCell++;
+                let filesToSkip = parseInt(file, 10);
+                while (filesToSkip > 0) {
+                    rank.push(null);
+                    filesToSkip--;
+                    currentFile++;
                 }
             }
 
         }
 
-        board.push(row);
-        currentRow++;
+        board.push(rank);
+        currentRank++;
     }
 
     return board;
