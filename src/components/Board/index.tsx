@@ -13,7 +13,6 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
     const [pieces, setPieces] = useState<Array<PieceData | null>>(initialPieces);
     const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
-    const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
 
     const switchActiveColor = () => {
         setActiveColor(activeColor === Color.WHITE ? Color.BLACK : Color.WHITE);
@@ -37,21 +36,26 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
         const squares: Array<JSX.Element> = [];
 
         for (let fileIndex = 0; fileIndex < rank.length; fileIndex++) {
-            const isPossibleMove = possibleMoves?.[rankIndex][fileIndex];
-            const isSelectedPiece = selectedPiece?.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
-
             let backgroundColor = (fileIndex + rankIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile;
+            let disabled = true;
 
-            if (isPossibleMove) {
-                backgroundColor = 'sandybrown';
-            }
-            if (isSelectedPiece) {
-                backgroundColor = 'wheat';
+            if (selectedPiece) {
+                const isPossibleMove = selectedPiece.possibleMoves?.[rankIndex][fileIndex];
+                const isSelectedPiece = selectedPiece?.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
+
+                if (isPossibleMove) {
+                    backgroundColor = 'sandybrown';
+                }
+                if (isSelectedPiece) {
+                    backgroundColor = 'wheat';
+                }
+
+                disabled = !isPossibleMove && !isSelectedPiece;
             }
 
             squares.push(
                 <TouchableOpacity
-                    disabled={!selectedPiece || !isPossibleMove || isSelectedPiece}
+                    disabled={disabled}
                     key={`${rankIndex}-${fileIndex}`}
                     style={{
                         ...styles.square,
@@ -76,7 +80,6 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
 
         selectedPiece?.updatePosition({x: file, y: rank});
         setSelectedPiece(null);
-        setPossibleMoves(undefined);
 
         switchActiveColor();
     };
@@ -97,7 +100,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
     const handleMovement = (piece: PieceData) => {
         setSelectedPiece(piece);
         const moves = calculatePossibleMoves(piece, board);
-        setPossibleMoves(moves);
+        piece.setPossibleMoves(moves);
     };
 
     const handleCapture = (pieceToCapture: PieceData) => {

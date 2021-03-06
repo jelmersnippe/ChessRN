@@ -13,6 +13,7 @@ class PieceData {
     color: Color;
     type: PieceType;
     hasMoved: boolean = false;
+    possibleMoves: Array<Array<boolean>> | undefined = undefined;
 
     constructor(color: Color, type: PieceType, position: Position) {
         this.color = color;
@@ -29,6 +30,10 @@ class PieceData {
             duration: 150,
             useNativeDriver: true
         }).start();
+    }
+
+    setPossibleMoves(possibleMoves: Array<Array<boolean>>) {
+        this.possibleMoves = possibleMoves;
     }
 }
 
