@@ -12,11 +12,15 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
     const [pieces, setPieces] = useState<Array<PieceData | null>>(initialPieces);
     const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
+    const [whiteChecked, setWhiteChecked] = useState<boolean>(false);
+    const [blackChecked, setBlackChecked] = useState<boolean>(false);
 
     useEffect(() => {
         for (const piece of pieces) {
             piece?.calculatePossibleMoves(board);
         }
+        setWhiteChecked(!!pieces.find((piece) => piece?.checksKing && piece.color === Color.BLACK));
+        setBlackChecked(!!pieces.find((piece) => piece?.checksKing && piece.color === Color.WHITE));
     }, [activeColor]);
 
     const switchActiveColor = () => {
@@ -118,6 +122,8 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
 
     return (
         <>
+            {whiteChecked && <Text>!WHITE CHECKED!</Text>}
+            {blackChecked && <Text>!BLACK CHECKED!</Text>}
             <Text>Currently playing: {activeColor === Color.WHITE ? 'white' : 'black'}</Text>
             <View style={styles.board}>
                 {renderRanks()}

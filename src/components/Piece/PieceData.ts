@@ -1,7 +1,7 @@
 import {Animated} from 'react-native';
 import {BoardData, Color, PieceType} from '../../constants/piece';
 import theme from '../../config/theme';
-import {calculatePossibleMoves} from '../../utils/pieceMovement';
+import {calculatePossibleMoves, checksKing} from '../../utils/pieceMovement';
 
 export interface Position {
     x: number;
@@ -15,6 +15,7 @@ class PieceData {
     type: PieceType;
     hasMoved: boolean = false;
     possibleMoves: Array<Array<boolean>> | undefined = undefined;
+    checksKing: boolean = false;
 
     constructor(color: Color, type: PieceType, position: Position) {
         this.color = color;
@@ -40,6 +41,7 @@ class PieceData {
     calculatePossibleMoves(board: BoardData) {
         const moves = calculatePossibleMoves(this, board);
         this.setPossibleMoves(moves);
+        this.checksKing = checksKing(this, board);
     }
 }
 

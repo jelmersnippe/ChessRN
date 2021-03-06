@@ -265,3 +265,17 @@ const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {
         capture: squareToCheck !== null && squareToCheck.color !== pieceColor
     };
 };
+
+export const checksKing = (piece: PieceData, board: BoardData): boolean => {
+    for (let rank = 0; rank < board.length; rank++) {
+        for (let file = 0; file < board[rank].length; file++) {
+            const pieceToCheck = board[rank][file];
+
+            if (pieceToCheck?.type === PieceType.KING && pieceToCheck?.color !== piece.color) {
+                return !!piece.possibleMoves?.[rank][file];
+            }
+        }
+    }
+
+    throw new Error('No king of opposing color on the board');
+};
