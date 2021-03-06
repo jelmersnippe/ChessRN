@@ -8,8 +8,9 @@ import PieceData from '../Piece/PieceData';
 import {calculatePossibleMoves} from '../../utils/pieceMovement';
 import {RowData} from '../../constants/piece';
 
-const Board: FunctionComponent<Props> = ({board, pieces}) => {
-    const [selectedPiece, setSelectedPiece] = useState<PieceData | undefined>(undefined);
+const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
+    const [board, setBoard] = useState(initialBoard);
+    const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
     const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
 
     const renderRows = (): Array<JSX.Element> => {
@@ -51,9 +52,16 @@ const Board: FunctionComponent<Props> = ({board, pieces}) => {
                         backgroundColor: backgroundColor
                     }}
                     onPress={() => {
-                        selectedPiece?.updatePosition({x: i, y: rowIndex});
-                        setSelectedPiece(undefined);
-                        setPossibleMoves(undefined);
+                        if (selectedPiece) {
+                            const updatedBoard = board;
+                            updatedBoard[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
+                            updatedBoard[rowIndex][i] = selectedPiece;
+                            setBoard([...updatedBoard]);
+
+                            selectedPiece?.updatePosition({x: i, y: rowIndex});
+                            setSelectedPiece(null);
+                            setPossibleMoves(undefined);
+                        }
                     }}
                 />
             );
@@ -75,6 +83,7 @@ const Board: FunctionComponent<Props> = ({board, pieces}) => {
     const handleMovement = (piece: PieceData) => {
         setSelectedPiece(piece);
         console.log('piece:', piece);
+        console.log('board:', board);
         const moves = calculatePossibleMoves(piece, board);
         setPossibleMoves(moves);
     };

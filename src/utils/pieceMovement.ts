@@ -6,19 +6,19 @@ type MovePossibilityData = Array<Array<boolean>>;
 export const calculatePossibleMoves = (piece: PieceData, board: BoardData): MovePossibilityData => {
     switch (piece.type) {
         case PieceType.KING:
-            return kingMovement(piece.boardPosition, board);
+            return kingMovement(piece, board);
         case PieceType.QUEEN:
-            const orthogonalMoves = orthogonalMovement(piece.boardPosition, board);
-            const diagonalMoves = diagonalMovement(piece.boardPosition, board);
+            const orthogonalMoves = orthogonalMovement(piece, board);
+            const diagonalMoves = diagonalMovement(piece, board);
             return orthogonalMoves.map((row, rowIndex) => row.map((cell, cellIndex) => cell ? cell : diagonalMoves[rowIndex][cellIndex]));
         case PieceType.KNIGHT:
-            return knightMovement(piece.boardPosition, board);
+            return knightMovement(piece, board);
         case PieceType.ROOK:
-            return orthogonalMovement(piece.boardPosition, board);
+            return orthogonalMovement(piece, board);
         case PieceType.BISHOP:
-            return diagonalMovement(piece.boardPosition, board);
+            return diagonalMovement(piece, board);
         case PieceType.PAWN:
-            return pawnMovement(piece.boardPosition, piece.color, board);
+            return pawnMovement(piece, board);
     }
 };
 
@@ -38,16 +38,16 @@ const generateFalseMovementObject = (board: BoardData) => {
     return movementPossible;
 };
 
-const orthogonalMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = [];
 
     for (let y = 0; y < board.length; y++) {
         const row: Array<boolean> = [];
 
         for (let x = 0; x < board[y].length; x++) {
-            if (piecePosition.x === x && piecePosition.y === y) {
+            if (piece.boardPosition.x === x && piece.boardPosition.y === y) {
                 row.push(false);
-            } else if (piecePosition.x === x || piecePosition.y === y) {
+            } else if (piece.boardPosition.x === x || piece.boardPosition.y === y) {
                 row.push(true);
             } else {
                 row.push(false);
@@ -60,16 +60,16 @@ const orthogonalMovement = (piecePosition: Position, board: BoardData): MovePoss
     return movementPossible;
 };
 
-const diagonalMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = [];
 
     for (let y = 0; y < board.length; y++) {
         const row: Array<boolean> = [];
 
         for (let x = 0; x < board[y].length; x++) {
-            if (piecePosition.x === x && piecePosition.y === y) {
+            if (piece.boardPosition.x === x && piece.boardPosition.y === y) {
                 row.push(false);
-            } else if (Math.abs(piecePosition.x - x) === Math.abs(piecePosition.y - y)) {
+            } else if (Math.abs(piece.boardPosition.x - x) === Math.abs(piece.boardPosition.y - y)) {
                 row.push(true);
             } else {
                 row.push(false);
@@ -82,86 +82,141 @@ const diagonalMovement = (piecePosition: Position, board: BoardData): MovePossib
     return movementPossible;
 };
 
-const knightMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    const canMoveLeft = piecePosition.x - 1 >= 0;
-    const canMoveRight = piecePosition.x + 1 < 8;
-    const canMoveUp = piecePosition.y - 1 >= 0;
-    const canMoveDown = piecePosition.y + 1 < 8;
+    const canMoveLeft = piece.boardPosition.x - 1 >= 0;
+    const canMoveRight = piece.boardPosition.x + 1 < 8;
+    const canMoveUp = piece.boardPosition.y - 1 >= 0;
+    const canMoveDown = piece.boardPosition.y + 1 < 8;
 
     if (canMoveLeft) {
-        if (piecePosition.y + 2 < 8) {
-            movementPossible[piecePosition.y + 2][piecePosition.x - 1] = true;
+        if (piece.boardPosition.y + 2 < 8) {
+            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x - 1] = isValidMove({
+                x: piece.boardPosition.x - 1,
+                y: piece.boardPosition.y + 2
+            }, piece.color, board);
         }
-        if (piecePosition.y - 2 >= 0) {
-            movementPossible[piecePosition.y - 2][piecePosition.x - 1] = true;
+        if (piece.boardPosition.y - 2 >= 0) {
+            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x - 1] = isValidMove({
+                x: piece.boardPosition.x - 1,
+                y: piece.boardPosition.y - 2
+            }, piece.color, board);
         }
     }
 
     if (canMoveRight) {
-        if (piecePosition.y + 2 < 8) {
-            movementPossible[piecePosition.y + 2][piecePosition.x + 1] = true;
+        if (piece.boardPosition.y + 2 < 8) {
+            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x + 1] = isValidMove({
+                x: piece.boardPosition.x + 1,
+                y: piece.boardPosition.y + 2
+            }, piece.color, board);
         }
-        if (piecePosition.y - 2 >= 0) {
-            movementPossible[piecePosition.y - 2][piecePosition.x + 1] = true;
+        if (piece.boardPosition.y - 2 >= 0) {
+            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x + 1] = isValidMove({
+                x: piece.boardPosition.x + 1,
+                y: piece.boardPosition.y - 2
+            }, piece.color, board);
         }
     }
 
     if (canMoveUp) {
-        if (piecePosition.x + 2 < 8) {
-            movementPossible[piecePosition.y - 1][piecePosition.x + 2] = true;
+        if (piece.boardPosition.x + 2 < 8) {
+            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 2] = isValidMove({
+                x: piece.boardPosition.x + 2,
+                y: piece.boardPosition.y - 1
+            }, piece.color, board);
         }
-        if (piecePosition.x - 2 >= 0) {
-            movementPossible[piecePosition.y - 1][piecePosition.x - 2] = true;
+        if (piece.boardPosition.x - 2 >= 0) {
+            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 2] = isValidMove({
+                x: piece.boardPosition.x - 2,
+                y: piece.boardPosition.y - 1
+            }, piece.color, board);
         }
     }
 
     if (canMoveDown) {
-        if (piecePosition.x + 2 < 8) {
-            movementPossible[piecePosition.y + 1][piecePosition.x + 2] = true;
+        if (piece.boardPosition.x + 2 < 8) {
+            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 2] = isValidMove({
+                x: piece.boardPosition.x + 2,
+                y: piece.boardPosition.y + 1
+            }, piece.color, board);
         }
-        if (piecePosition.x - 2 >= 0) {
-            movementPossible[piecePosition.y + 1][piecePosition.x - 2] = true;
+        if (piece.boardPosition.x - 2 >= 0) {
+            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 2] = isValidMove({
+                x: piece.boardPosition.x - 2,
+                y: piece.boardPosition.y + 1
+            }, piece.color, board);
         }
     }
 
     return movementPossible;
 };
 
-const kingMovement = (piecePosition: Position, board: BoardData): MovePossibilityData => {
+const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    const canMoveLeft = piecePosition.x - 1 >= 0;
-    const canMoveRight = piecePosition.x + 1 < 8;
+    const canMoveLeft = piece.boardPosition.x - 1 >= 0;
+    const canMoveRight = piece.boardPosition.x + 1 < 8;
 
-    if (piecePosition.y - 1 >= 0) {
-        movementPossible[piecePosition.y - 1][piecePosition.x] = true;
-        movementPossible[piecePosition.y - 1][piecePosition.x - 1] = canMoveLeft;
-        movementPossible[piecePosition.y - 1][piecePosition.x + 1] = canMoveRight;
+    if (piece.boardPosition.y - 1 >= 0) {
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = isValidMove({
+            x: piece.boardPosition.x,
+            y: piece.boardPosition.y - 1
+        }, piece.color, board);
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 1] = canMoveLeft && isValidMove({
+            x: piece.boardPosition.x - 1,
+            y: piece.boardPosition.y - 1
+        }, piece.color, board);
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 1] = canMoveRight && isValidMove({
+            x: piece.boardPosition.x + 1,
+            y: piece.boardPosition.y - 1
+        }, piece.color, board);
     }
 
-    movementPossible[piecePosition.y][piecePosition.x - 1] = canMoveLeft;
-    movementPossible[piecePosition.y][piecePosition.x + 1] = canMoveRight;
+    movementPossible[piece.boardPosition.y][piece.boardPosition.x - 1] = canMoveLeft && isValidMove({
+        x: piece.boardPosition.x - 1,
+        y: piece.boardPosition.y
+    }, piece.color, board);
+    movementPossible[piece.boardPosition.y][piece.boardPosition.x + 1] = canMoveRight && isValidMove({
+        x: piece.boardPosition.x + 1,
+        y: piece.boardPosition.y
+    }, piece.color, board);
 
-    if (piecePosition.y + 1 < 8) {
-        movementPossible[piecePosition.y + 1][piecePosition.x] = true;
-        movementPossible[piecePosition.y + 1][piecePosition.x - 1] = canMoveLeft;
-        movementPossible[piecePosition.y + 1][piecePosition.x + 1] = canMoveRight;
+    if (piece.boardPosition.y + 1 < 8) {
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = isValidMove({
+            x: piece.boardPosition.x,
+            y: piece.boardPosition.y + 1
+        }, piece.color, board);
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 1] = canMoveLeft && isValidMove({
+            x: piece.boardPosition.x - 1,
+            y: piece.boardPosition.y + 1
+        }, piece.color, board);
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 1] = canMoveRight && isValidMove({
+            x: piece.boardPosition.x + 1,
+            y: piece.boardPosition.y + 1
+        }, piece.color, board);
     }
 
     return movementPossible;
 };
 
-const pawnMovement = (piecePosition: Position, pieceColor: Color, board: BoardData): MovePossibilityData => {
+const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    if (pieceColor === Color.BLACK && piecePosition.y + 1 < 8) {
-        movementPossible[piecePosition.y + 1][piecePosition.x] = true;
-    } else if (pieceColor === Color.WHITE && piecePosition.y - 1 >= 0) {
-        movementPossible[piecePosition.y - 1][piecePosition.x] = true;
+    if (piece.color === Color.BLACK && piece.boardPosition.y + 1 < 8
+        && isValidMove({x: piece.boardPosition.x, y: piece.boardPosition.y + 1}, piece.color, board)) {
+        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = true;
+    } else if (piece.color === Color.WHITE && piece.boardPosition.y - 1 >= 0
+        && isValidMove({x: piece.boardPosition.x, y: piece.boardPosition.y - 1}, piece.color, board)) {
+        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = true;
     }
 
     return movementPossible;
 };
 
+const isValidMove = (position: Position, pieceColor: Color, board: BoardData): boolean => {
+    const cellToCheck = board[position.y][position.x];
+    console.log(cellToCheck);
+    return cellToCheck === null || cellToCheck.color !== pieceColor;
+};
