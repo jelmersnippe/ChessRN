@@ -162,67 +162,31 @@ const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityDa
 const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    const canMoveLeft = piece.boardPosition.x - 1 >= 0;
-    const canMoveRight = piece.boardPosition.x + 1 < 8;
-    const canMoveUp = piece.boardPosition.y - 1 >= 0;
-    const canMoveDown = piece.boardPosition.y + 1 < 8;
+    for (let rank = piece.boardPosition.y - 2; rank <= piece.boardPosition.y + 2; rank++) {
+        // Outside of the board
+        if (rank < 0 || rank >= 8) {
+            continue;
+        }
 
-    if (canMoveLeft) {
-        if (piece.boardPosition.y + 2 < 8) {
-            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x - 1] = validateMove({
-                x: piece.boardPosition.x - 1,
-                y: piece.boardPosition.y + 2
-            }, piece.color, board).valid;
-        }
-        if (piece.boardPosition.y - 2 >= 0) {
-            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x - 1] = validateMove({
-                x: piece.boardPosition.x - 1,
-                y: piece.boardPosition.y - 2
-            }, piece.color, board).valid;
-        }
-    }
+        for (let file = piece.boardPosition.x - 2; file <= piece.boardPosition.x + 2; file++) {
+            // Outside of the board
+            if (file < 0 || file >= 8) {
+                continue;
+            }
 
-    if (canMoveRight) {
-        if (piece.boardPosition.y + 2 < 8) {
-            movementPossible[piece.boardPosition.y + 2][piece.boardPosition.x + 1] = validateMove({
-                x: piece.boardPosition.x + 1,
-                y: piece.boardPosition.y + 2
-            }, piece.color, board).valid;
-        }
-        if (piece.boardPosition.y - 2 >= 0) {
-            movementPossible[piece.boardPosition.y - 2][piece.boardPosition.x + 1] = validateMove({
-                x: piece.boardPosition.x + 1,
-                y: piece.boardPosition.y - 2
-            }, piece.color, board).valid;
-        }
-    }
+            // File and rank movement delta are equal - Not allowed by Knight rules
+            if (Math.abs(piece.boardPosition.x - file) === Math.abs(piece.boardPosition.y - rank)) {
+                continue;
+            }
 
-    if (canMoveUp) {
-        if (piece.boardPosition.x + 2 < 8) {
-            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 2] = validateMove({
-                x: piece.boardPosition.x + 2,
-                y: piece.boardPosition.y - 1
-            }, piece.color, board).valid;
-        }
-        if (piece.boardPosition.x - 2 >= 0) {
-            movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 2] = validateMove({
-                x: piece.boardPosition.x - 2,
-                y: piece.boardPosition.y - 1
-            }, piece.color, board).valid;
-        }
-    }
+            // Orthogonal movement - Not allowed by knight rules
+            if (file === piece.boardPosition.x || rank === piece.boardPosition.y) {
+                continue;
+            }
 
-    if (canMoveDown) {
-        if (piece.boardPosition.x + 2 < 8) {
-            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 2] = validateMove({
-                x: piece.boardPosition.x + 2,
-                y: piece.boardPosition.y + 1
-            }, piece.color, board).valid;
-        }
-        if (piece.boardPosition.x - 2 >= 0) {
-            movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 2] = validateMove({
-                x: piece.boardPosition.x - 2,
-                y: piece.boardPosition.y + 1
+            movementPossible[rank][file] = validateMove({
+                x: file,
+                y: rank
             }, piece.color, board).valid;
         }
     }
@@ -233,46 +197,28 @@ const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData
 const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    const canMoveLeft = piece.boardPosition.x - 1 >= 0;
-    const canMoveRight = piece.boardPosition.x + 1 < 8;
+    for (let rank = piece.boardPosition.y - 1; rank <= piece.boardPosition.y + 1; rank++) {
+        // Outside of the board
+        if (rank < 0 || rank >= 8) {
+            continue;
+        }
 
-    if (piece.boardPosition.y - 1 >= 0) {
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x] = validateMove({
-            x: piece.boardPosition.x,
-            y: piece.boardPosition.y - 1
-        }, piece.color, board).valid;
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x - 1] = canMoveLeft && validateMove({
-            x: piece.boardPosition.x - 1,
-            y: piece.boardPosition.y - 1
-        }, piece.color, board).valid;
-        movementPossible[piece.boardPosition.y - 1][piece.boardPosition.x + 1] = canMoveRight && validateMove({
-            x: piece.boardPosition.x + 1,
-            y: piece.boardPosition.y - 1
-        }, piece.color, board).valid;
-    }
+        for (let file = piece.boardPosition.x - 1; file <= piece.boardPosition.x + 1; file++) {
+            // Outside of the board
+            if (file < 0 || file >= 8) {
+                continue;
+            }
 
-    movementPossible[piece.boardPosition.y][piece.boardPosition.x - 1] = canMoveLeft && validateMove({
-        x: piece.boardPosition.x - 1,
-        y: piece.boardPosition.y
-    }, piece.color, board).valid;
-    movementPossible[piece.boardPosition.y][piece.boardPosition.x + 1] = canMoveRight && validateMove({
-        x: piece.boardPosition.x + 1,
-        y: piece.boardPosition.y
-    }, piece.color, board).valid;
+            // Own square
+            if (file === piece.boardPosition.x && rank === piece.boardPosition.y) {
+                continue;
+            }
 
-    if (piece.boardPosition.y + 1 < 8) {
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x] = validateMove({
-            x: piece.boardPosition.x,
-            y: piece.boardPosition.y + 1
-        }, piece.color, board).valid;
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x - 1] = canMoveLeft && validateMove({
-            x: piece.boardPosition.x - 1,
-            y: piece.boardPosition.y + 1
-        }, piece.color, board).valid;
-        movementPossible[piece.boardPosition.y + 1][piece.boardPosition.x + 1] = canMoveRight && validateMove({
-            x: piece.boardPosition.x + 1,
-            y: piece.boardPosition.y + 1
-        }, piece.color, board).valid;
+            movementPossible[rank][file] = validateMove({
+                x: file,
+                y: rank
+            }, piece.color, board).valid;
+        }
     }
 
     return movementPossible;
