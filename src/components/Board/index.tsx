@@ -1,5 +1,5 @@
 import React, {FunctionComponent, useState} from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {Text, TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import theme from '../../config/theme';
 import {Props} from './Props';
@@ -100,10 +100,13 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces, initialActiveCol
     };
 
     return (
-        <View style={styles.board}>
-            {renderRanks()}
-            {renderPieces()}
-        </View>
+        <>
+            <Text>Currently playing: {activeColor === Color.WHITE ? 'white' : 'black'}</Text>
+            <View style={styles.board}>
+                {renderRanks()}
+                {renderPieces()}
+            </View>
+        </>
     );
 };
 
