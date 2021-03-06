@@ -64,7 +64,7 @@ export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
     const board: BoardData = parseFenBoard(fenElements[0]);
-    const pieces: Array<PieceData> = createPiecesListFromBoard(board);
+    const pieces: { [key in Color]: Array<PieceData> } = createPiecesListFromBoard(board);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
 
@@ -81,10 +81,15 @@ export const fenToJson = (fen: string) => {
     };
 };
 
-export const createPiecesListFromBoard = (board: BoardData): Array<PieceData> => {
-    return board.map((rank) =>
+export const createPiecesListFromBoard = (board: BoardData): { [key in Color]: Array<PieceData> } => {
+    const allPieces: Array<PieceData> = board.map((rank) =>
         rank.filter((file) => file !== null) as Array<PieceData>
     ).flat(1);
+
+    return {
+        [Color.WHITE]: allPieces.filter((piece) => piece.color !== Color.BLACK),
+        [Color.BLACK]: allPieces.filter((piece) => piece.color !== Color.WHITE)
+    };
 };
 
 export const createDuplicateBoard = (board: BoardData): BoardData => {

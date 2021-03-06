@@ -3,8 +3,25 @@ import {Color} from '../../constants/piece';
 
 const initialState: BoardState = {
     board: [],
-    pieces: [],
-    activeColor: Color.WHITE
+    pieces: {
+        [Color.WHITE]: [],
+        [Color.BLACK]: []
+    },
+    activeColor: Color.WHITE,
+    castlesAvailable: {
+        [Color.WHITE]: {
+            queenSide: true,
+            kingSide: true
+        },
+        [Color.BLACK]: {
+            queenSide: true,
+            kingSide: true
+        }
+    },
+    checks: {
+        [Color.WHITE]: false,
+        [Color.BLACK]: false
+    }
 };
 
 const boardReducer = (state = initialState, action: BoardActionTypes): BoardState => {
@@ -23,7 +40,10 @@ const boardReducer = (state = initialState, action: BoardActionTypes): BoardStat
         case BoardActionType.SET_PIECES:
             return {
                 ...state,
-                pieces: action.payload
+                pieces: {
+                    ...state.pieces,
+                    [action.payload.color]: action.payload.pieces
+                }
             };
         default:
             return state;

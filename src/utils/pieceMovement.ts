@@ -30,11 +30,11 @@ export const validateMovesForCheck = (piece: PieceData, board: BoardData): MoveP
 
             const tempPieces = createPiecesListFromBoard(tempBoard);
 
-            for (const opposingPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
+            for (const opposingPiece of tempPieces[piece.color === Color.WHITE ? Color.BLACK : Color.WHITE]) {
                 opposingPiece?.calculatePossibleMoves(tempBoard, tempPieces);
             }
 
-            possibleMoves[rank][file] = !isKingChecked(tempPieces, piece.color);
+            possibleMoves[rank][file] = !isKingChecked(tempPieces[piece.color === Color.WHITE ? Color.BLACK : Color.WHITE]);
         }
     }
 
@@ -320,6 +320,8 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
             break;
         }
 
+        // TODO: Fix unmoved pawns being able to hop over pieces in front of them
+
         const forwardSquare = checkSquare({x: piece.boardPosition.x, y: rankToCheck}, piece.color, board);
         movementPossible[rankToCheck][piece.boardPosition.x] = (forwardSquare.valid && !forwardSquare.capture);
 
@@ -362,19 +364,28 @@ const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {
 
 export const checksKing = (piece: PieceData, pieces: Array<PieceData>): boolean => {
     const opposingKing = pieces.find((pieceToCheck) => pieceToCheck.color !== piece.color && pieceToCheck.type === PieceType.KING);
+    if (piece.type === PieceType.QUEEN && piece.color === Color.WHITE) {
+        console.log('attacking piece', piece);
+        console.log('pieces in checksKing', pieces);
+        console.log('opposing king', opposingKing);
+    }
 
     if (!opposingKing) {
         throw new Error('No king of opposing color on the board');
     }
 
+    if (piece.type === PieceType.QUEEN && piece.color === Color.WHITE) {
+        console.log('checks king', piece.possibleMoves?.[opposingKing.boardPosition.y][opposingKing.boardPosition.x]);
+    }
+
     return !!piece.possibleMoves?.[opposingKing.boardPosition.y][opposingKing.boardPosition.x];
 };
 
-export const isKingChecked = (pieces: Array<PieceData>, colorToCheck: Color) => !!pieces.find((piece) => piece?.checksKing && piece.color !== colorToCheck);
+export const isKingChecked = (pieces: Array<PieceData>) => {
+    return !!pieces.find((piece) => piece.checksKing);
+};
 
-export const isCheckmate = (pieces: Array<PieceData>, colorToCheck: Color) =>
+export const isCheckmate = (pieces: Array<PieceData>) =>
     pieces.reduce((possibleMoves, piece) => {
-        return piece.color === colorToCheck ?
-            possibleMoves + (piece.possibleMoves ? piece.possibleMoves.flat(1).filter((possible) => possible).length : 0)
-            : possibleMoves;
+        return possibleMoves + (piece.possibleMoves ? piece.possibleMoves.flat(1).filter((possible) => possible).length : 0);
     }, 0) === 0;

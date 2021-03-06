@@ -1,16 +1,24 @@
 import {BoardData, Color} from '../../constants/piece';
-import PieceData from '../../components/Piece/PieceData';
+import PieceData, {Position} from '../../components/Piece/PieceData';
 
 export interface BoardState {
     board: BoardData;
-    pieces: Array<PieceData>;
+    pieces: { [key in Color]: Array<PieceData> };
     activeColor: Color;
+    castlesAvailable: {
+        [key in Color]: {
+            queenSide: boolean;
+            kingSide: boolean;
+        }
+    };
+    enPassant?: Position;
+    checks: { [key in Color]: boolean };
 }
 
 export enum BoardActionType {
     SET_ACTIVE_COLOR = 'SET_ACTIVE_COLOR',
     SET_BOARD = 'SET_BOARD',
-    SET_PIECES = 'SET_PIECES',
+    SET_PIECES = 'SET_PIECES'
 }
 
 export interface SetActiveColor {
@@ -25,7 +33,10 @@ export interface SetBoard {
 
 export interface SetPieces {
     type: BoardActionType.SET_PIECES;
-    payload: Array<PieceData>;
+    payload: {
+        color: Color;
+        pieces: Array<PieceData>;
+    };
 }
 
 export type BoardActionTypes = SetActiveColor | SetBoard | SetPieces;

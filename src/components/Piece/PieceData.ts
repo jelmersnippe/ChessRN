@@ -34,16 +34,16 @@ class PieceData {
         }).start();
     }
 
-    calculatePossibleMoves(board: BoardData, pieces: Array<PieceData>) {
+    calculatePossibleMoves(board: BoardData, pieces: { [key in Color]: Array<PieceData> }) {
         this.possibleMoves = calculatePossibleMoves(this, board);
-        this.checksKing = checksKing(this, pieces);
+        this.checksKing = checksKing(this, pieces[this.color === Color.WHITE ? Color.BLACK : Color.WHITE]);
     }
 
     validateMovesForCheck(board: BoardData) {
         this.possibleMoves = validateMovesForCheck(this, board);
     }
 
-    updatePossibleMoves(board: BoardData, pieces: Array<PieceData>) {
+    updatePossibleMoves(board: BoardData, pieces: { [key in Color]: Array<PieceData> }) {
         this.calculatePossibleMoves(board, pieces);
         this.validateMovesForCheck(board);
     }

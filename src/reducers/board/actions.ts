@@ -12,13 +12,16 @@ export const setActiveColor = (color: Color): SetActiveColor => {
 export const setBoard = (board: BoardData): SetBoard => {
     return {
         type: BoardActionType.SET_BOARD,
-        payload: board
+        payload: [...board]
     };
 };
 
-export const setPieces = (pieces: Array<PieceData>): SetPieces => {
+export const setPieces = (pieces: Array<PieceData>, color: Color): SetPieces => {
     return {
         type: BoardActionType.SET_PIECES,
-        payload: pieces
+        payload: {
+            color: color,
+            pieces: [...pieces.filter((piece) => piece.color === color)]
+        }
     };
 };

@@ -28,28 +28,35 @@ const Board: FunctionComponent = () => {
     useEffect(() => {
         dispatch(setBoard(gameState.board));
         dispatch(setActiveColor(gameState.activeColor));
-        dispatch(setPieces(gameState.pieces));
+        dispatch(setPieces(gameState.pieces[Color.WHITE], Color.WHITE));
+        dispatch(setPieces(gameState.pieces[Color.BLACK], Color.BLACK));
     }, []);
 
     useEffect(() => {
-        for (const piece of pieces) {
-            piece?.updatePossibleMoves(board, pieces);
+        const pieceColors = Object.keys(pieces) as Array<Color>;
+        for (const color of pieceColors) {
+            for (const piece of pieces[color]) {
+                piece?.updatePossibleMoves(board, pieces);
+            }
         }
-    }, [pieces, board]);
+    }, [pieces, board, activeColor]);
 
     useEffect(() => {
-        setWhiteChecked(isKingChecked(pieces, Color.WHITE));
-        setBlackChecked(isKingChecked(pieces, Color.BLACK));
-    }, [pieces]);
+        console.log('checking if checks happened');
+        console.log('white king checked: ', isKingChecked(pieces[Color.BLACK]));
+        console.log('black king checked: ', isKingChecked(pieces[Color.WHITE]));
+        setWhiteChecked(isKingChecked(pieces[Color.BLACK]));
+        setBlackChecked(isKingChecked(pieces[Color.WHITE]));
+    }, [board]);
 
     useEffect(() => {
-        if (isCheckmate(pieces, Color.WHITE)) {
+        if (whiteChecked && isCheckmate(pieces[Color.WHITE])) {
             setWinner(Color.BLACK);
         }
     }, [whiteChecked]);
 
     useEffect(() => {
-        if (isCheckmate(pieces, Color.BLACK)) {
+        if (blackChecked && isCheckmate(pieces[Color.BLACK])) {
             setWinner(Color.WHITE);
         }
     }, [blackChecked]);
@@ -80,7 +87,6 @@ const Board: FunctionComponent = () => {
             let disabled = true;
 
             if (selectedPiece) {
-                console.log(selectedPiece);
                 const isPossibleMove = selectedPiece.possibleMoves?.[rankIndex][fileIndex];
                 const isSelectedPiece = selectedPiece.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
 
@@ -94,7 +100,6 @@ const Board: FunctionComponent = () => {
                 disabled = !isPossibleMove && !isSelectedPiece;
             }
 
-            console.log(disabled);
             squares.push(
                 <TouchableOpacity
                     disabled={disabled}
@@ -130,18 +135,19 @@ const Board: FunctionComponent = () => {
     };
 
     const renderPieces = () => {
-        return pieces.map((piece, index) => {
-            console.log(piece);
-            console.log(piece.color === activeColor);
-            return piece && (<Piece
-                key={`piece${index}`}
-                piece={piece}
-                interactable={piece.color === activeColor}
-                selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
-                capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.boardPosition.y][piece.boardPosition.x]}
-                captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
-            />);
-        });
+        const keys = Object.keys(pieces) as Array<Color>;
+        return keys.map((key) =>
+            pieces[key].map((piece, index) => {
+                return piece && (<Piece
+                    key={`piece${index}`}
+                    piece={piece}
+                    interactable={piece.color === activeColor}
+                    selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
+                    capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.boardPosition.y][piece.boardPosition.x]}
+                    captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
+                />);
+            })
+        );
     };
 
     const handleCapture = (pieceToCapture: PieceData) => {
@@ -150,8 +156,8 @@ const Board: FunctionComponent = () => {
         }
 
         board[pieceToCapture.boardPosition.y][pieceToCapture.boardPosition.x] = null;
-        const filteredPieces = pieces.filter((piece) => piece?.boardPosition !== pieceToCapture?.boardPosition);
-        dispatch(setPieces([...filteredPieces]));
+        const filteredPieces = pieces[pieceToCapture.color].filter((piece) => piece?.boardPosition !== pieceToCapture?.boardPosition);
+        dispatch(setPieces(filteredPieces, pieceToCapture.color));
         commitMovement(pieceToCapture.boardPosition.y, pieceToCapture.boardPosition.x);
     };
 
