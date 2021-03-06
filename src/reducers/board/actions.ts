@@ -1,6 +1,7 @@
 import {ActionType, createAction} from 'typesafe-actions';
 import {BoardData, Color} from '../../constants/piece';
 import PieceData from '../../components/Piece/PieceData';
+import {CheckedState} from '../../utils/pieceMovement';
 
 export const setActiveColorAction = createAction(
     'SET_ACTIVE_COLOR'
@@ -19,7 +20,7 @@ export const setPiecesAction = createAction(
 
 export const setChecksAction = createAction(
     'SET_CHECKS'
-)<Partial<{ [key in Color]: boolean }>>();
+)<Partial<{ [key in Color]: CheckedState | false }>>();
 
 export const updatePossibleMovesAction = createAction(
     'UPDATE_POSSIBLE_MOVES'

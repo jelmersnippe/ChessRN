@@ -2,6 +2,7 @@ import {BoardData, Color} from '../../constants/piece';
 import {getType, Reducer} from 'typesafe-actions';
 import {BoardActionTypes, setActiveColorAction, setBoardAction, setChecksAction, setPiecesAction} from './actions';
 import PieceData, {Position} from '../../components/Piece/PieceData';
+import {CheckedState} from '../../utils/pieceMovement';
 
 export interface BoardState {
     board: BoardData;
@@ -14,7 +15,7 @@ export interface BoardState {
         }
     };
     enPassant?: Position;
-    checks: { [key in Color]: boolean };
+    checks: { [key in Color]: CheckedState | false };
 }
 
 

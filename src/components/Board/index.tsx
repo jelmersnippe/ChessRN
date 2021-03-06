@@ -8,7 +8,6 @@ import {Color, RankData} from '../../constants/piece';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
 import {fenToJson} from '../../utils/fen';
-import {isCheckmate} from '../../utils/pieceMovement';
 import {BoardActionTypes, setActiveColorAction, setBoardAction, setPiecesAction} from '../../reducers/board/actions';
 
 const Board: FunctionComponent = () => {
@@ -19,7 +18,6 @@ const Board: FunctionComponent = () => {
     const dispatch = useDispatch<Dispatch<BoardActionTypes>>();
 
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
-    const [winner, setWinner] = useState<Color | undefined>(undefined);
 
     useEffect(() => {
         dispatch(setPiecesAction({pieces: gameState.pieces[Color.WHITE], color: Color.WHITE}));
@@ -27,15 +25,6 @@ const Board: FunctionComponent = () => {
         dispatch(setBoardAction(gameState.board));
         dispatch(setActiveColorAction(gameState.activeColor));
     }, []);
-
-    useEffect(() => {
-        if (checks[Color.WHITE] && isCheckmate(pieces[Color.WHITE])) {
-            setWinner(Color.BLACK);
-        }
-        if (checks[Color.BLACK] && isCheckmate(pieces[Color.BLACK])) {
-            setWinner(Color.WHITE);
-        }
-    }, [checks]);
 
     const renderRanks = (): Array<JSX.Element> => {
         const ranks: Array<JSX.Element> = [];
@@ -136,9 +125,8 @@ const Board: FunctionComponent = () => {
 
     return (
         <>
-            {winner && <Text>Winner is {winner}</Text>}
-            {checks[Color.WHITE] && <Text>!WHITE CHECKED!</Text>}
-            {checks[Color.BLACK] && <Text>!BLACK CHECKED!</Text>}
+            {checks[Color.WHITE] && <Text>White = {checks[Color.WHITE]}!</Text>}
+            {checks[Color.BLACK] && <Text>Black = {checks[Color.BLACK]}!</Text>}
             <Text>Currently playing: {activeColor === Color.WHITE ? 'white' : 'black'}</Text>
             <View style={styles.board}>
                 {renderRanks()}
