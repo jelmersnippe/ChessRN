@@ -8,8 +8,9 @@ import PieceData from '../Piece/PieceData';
 import {calculatePossibleMoves} from '../../utils/pieceMovement';
 import {BoardData, Color, RankData} from '../../constants/piece';
 
-const Board: FunctionComponent<Props> = ({initialBoard, pieces, initialActiveColor}) => {
+const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialActiveColor}) => {
     const [board, setBoard] = useState<BoardData>(initialBoard);
+    const [pieces, setPieces] = useState<Array<PieceData | null>>(initialPieces);
     const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
     const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
@@ -65,17 +66,19 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces, initialActiveCol
     };
 
     const commitMovement = (rank: number, file: number) => {
-        if (selectedPiece) {
-            board[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
-            board[rank][file] = selectedPiece;
-            setBoard([...board]);
-
-            selectedPiece?.updatePosition({x: file, y: rank});
-            setSelectedPiece(null);
-            setPossibleMoves(undefined);
-
-            switchActiveColor();
+        if (!selectedPiece) {
+            return;
         }
+
+        board[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
+        board[rank][file] = selectedPiece;
+        setBoard([...board]);
+
+        selectedPiece?.updatePosition({x: file, y: rank});
+        setSelectedPiece(null);
+        setPossibleMoves(undefined);
+
+        switchActiveColor();
     };
 
     const renderPieces = () => {
@@ -83,20 +86,29 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces, initialActiveCol
             piece &&
             <Piece
                 key={`piece${index}`}
-                movementAction={(pieceToMove) => handleMovement(pieceToMove)}
                 piece={piece}
                 interactable={piece.color === activeColor}
+                movementAction={(pieceToMove) => handleMovement(pieceToMove)}
+                capturable={piece.color !== activeColor && !!selectedPiece}
+                captureAction={(pieceToMove) => handleCapture(pieceToMove)}
             />);
     };
 
     const handleMovement = (piece: PieceData) => {
-        if (board) {
-            setSelectedPiece(piece);
-            console.log('piece:', piece);
-            console.log('board:', board);
-            const moves = calculatePossibleMoves(piece, board);
-            setPossibleMoves(moves);
+        setSelectedPiece(piece);
+        const moves = calculatePossibleMoves(piece, board);
+        setPossibleMoves(moves);
+    };
+
+    const handleCapture = (pieceToCapture: PieceData) => {
+        if (!selectedPiece) {
+            return;
         }
+
+        board[pieceToCapture.boardPosition.y][pieceToCapture.boardPosition.x] = null;
+        const filteredPieces = pieces.filter((piece) => piece?.boardPosition !== pieceToCapture?.boardPosition);
+        setPieces([...filteredPieces]);
+        commitMovement(pieceToCapture.boardPosition.y, pieceToCapture.boardPosition.x);
     };
 
     return (

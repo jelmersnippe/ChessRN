@@ -13,7 +13,7 @@ const App = () => {
                 <Text style={styles.title}>ChessRN</Text>
                 <Board
                     initialBoard={gameState.board}
-                    pieces={gameState.pieces}
+                    initialPieces={gameState.pieces}
                     initialActiveColor={gameState.activeColor}
                 />
             </SafeAreaView>

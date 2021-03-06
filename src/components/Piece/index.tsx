@@ -4,7 +4,7 @@ import styles from './styles';
 import {Props} from './Props';
 import {pieceImages} from '../../constants/piece';
 
-const Piece: FunctionComponent<Props> = ({piece, movementAction, interactable}) => {
+const Piece: FunctionComponent<Props> = ({piece, interactable, movementAction, capturable, captureAction}) => {
 
     return (
         <Animated.View
@@ -19,9 +19,13 @@ const Piece: FunctionComponent<Props> = ({piece, movementAction, interactable}) 
             <TouchableOpacity
                 style={{flex: 1}}
                 onPress={() => {
-                    movementAction(piece);
+                    if (interactable) {
+                        movementAction(piece);
+                    } else if (capturable) {
+                        captureAction(piece);
+                    }
                 }}
-                disabled={!interactable}
+                disabled={!interactable && !capturable}
             >
                 <Image
                     style={styles.image}
