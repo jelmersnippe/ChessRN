@@ -1,24 +1,18 @@
 import React from 'react';
 import {SafeAreaView, StatusBar, StyleSheet, Text} from 'react-native';
 import Board from './components/Board';
-import {fenToJson} from './utils/fen';
+import {Provider} from 'react-redux';
+import store from './config/store';
 
 const App = () => {
-    const gameState = fenToJson('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-    // const gameState = fenToJson('rnbqkbnr/1ppQ1pp1/7p/pB2p3/4P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1');
-
     return (
-        <>
+        <Provider store={store}>
             <StatusBar barStyle={'dark-content'}/>
             <SafeAreaView style={styles.container}>
                 <Text style={styles.title}>ChessRN</Text>
-                <Board
-                    initialBoard={gameState.board}
-                    initialPieces={gameState.pieces}
-                    initialActiveColor={gameState.activeColor}
-                />
+                <Board/>
             </SafeAreaView>
-        </>
+        </Provider>
     );
 };
 

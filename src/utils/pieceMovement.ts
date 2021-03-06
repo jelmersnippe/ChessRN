@@ -30,8 +30,8 @@ export const validateMovesForCheck = (piece: PieceData, board: BoardData): MoveP
 
             const tempPieces = createPiecesListFromBoard(tempBoard);
 
-            for (const tempPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
-                tempPiece?.calculatePossibleMoves(tempBoard, tempPieces);
+            for (const opposingPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
+                opposingPiece?.calculatePossibleMoves(tempBoard, tempPieces);
             }
 
             possibleMoves[rank][file] = !isKingChecked(tempPieces, piece.color);
@@ -266,10 +266,10 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
                 continue;
             }
 
-            if (!piece.hasMoved) {
-                validateQueenSideCastle();
-                validateKingSideCastle();
-            }
+            // if (!piece.hasMoved) {
+            //     validateQueenSideCastle();
+            //     validateKingSideCastle();
+            // }
 
             // Own square
             if (file === piece.boardPosition.x && rank === piece.boardPosition.y) {
@@ -286,26 +286,26 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
     return movementPossible;
 };
 
-const validateQueenSideCastle = (piece: PieceData, board: BoardData): boolean => {
-    if (piece.hasMoved || piece.type !== PieceType.KING) {
-        return false;
-    }
-
-    const queenSideRook = board[piece.boardPosition.y][0];
-    if (!queenSideRook || queenSideRook.type !== PieceType.ROOK || queenSideRook.hasMoved) {
-        return false;
-    }
-
-    for (let file = piece.boardPosition.x; file >= 0; file--) {
-        // Check if any enemy pieces have any of these fields as a possible move
-    }
-
-    return false;
-};
-
-const validateKingSideCastle = () => {
-
-};
+// const validateQueenSideCastle = (piece: PieceData, board: BoardData): boolean => {
+//     if (piece.hasMoved || piece.type !== PieceType.KING) {
+//         return false;
+//     }
+//
+//     const queenSideRook = board[piece.boardPosition.y][0];
+//     if (!queenSideRook || queenSideRook.type !== PieceType.ROOK || queenSideRook.hasMoved) {
+//         return false;
+//     }
+//
+//     for (let file = piece.boardPosition.x; file >= 0; file--) {
+//         // Check if any enemy pieces have any of these fields as a possible move
+//     }
+//
+//     return false;
+// };
+//
+// const validateKingSideCastle = () => {
+//
+// };
 
 const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);

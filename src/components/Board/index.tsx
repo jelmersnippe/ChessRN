@@ -2,43 +2,60 @@ import React, {FunctionComponent, useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import theme from '../../config/theme';
-import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
-import {BoardData, Color, RankData} from '../../constants/piece';
+import {Color, RankData} from '../../constants/piece';
+import {useDispatch, useSelector} from 'react-redux';
+import {RootState} from '../../config/store';
+import {setActiveColor, setBoard, setPieces} from '../../reducers/board/actions';
+import {fenToJson} from '../../utils/fen';
 import {isCheckmate, isKingChecked} from '../../utils/pieceMovement';
 
-const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialActiveColor}) => {
-    const [board, setBoard] = useState<BoardData>(initialBoard);
-    const [pieces, setPieces] = useState<Array<PieceData>>(initialPieces);
-    const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
+const Board: FunctionComponent = () => {
+    const gameState = fenToJson('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    // const gameState = fenToJson('rnbqkbnr/1ppQ1pp1/7p/pB2p3/4P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1');
+
+    const board = useSelector((state: RootState) => state.board.board);
+    const pieces = useSelector((state: RootState) => state.board.pieces);
+    const activeColor = useSelector((state: RootState) => state.board.activeColor);
+    const dispatch = useDispatch();
+
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
     const [whiteChecked, setWhiteChecked] = useState<boolean>(false);
     const [blackChecked, setBlackChecked] = useState<boolean>(false);
     const [winner, setWinner] = useState<Color | undefined>(undefined);
 
     useEffect(() => {
-        setWhiteChecked(false);
-        setBlackChecked(false);
+        dispatch(setBoard(gameState.board));
+        dispatch(setActiveColor(gameState.activeColor));
+        dispatch(setPieces(gameState.pieces));
+    }, []);
+
+    useEffect(() => {
         for (const piece of pieces) {
             piece?.updatePossibleMoves(board, pieces);
         }
-        if (isKingChecked(pieces, Color.WHITE)) {
-            setWhiteChecked(true);
-            if (isCheckmate(pieces, Color.WHITE)) {
-                setWinner(Color.BLACK);
-            }
+    }, [pieces, board]);
+
+    useEffect(() => {
+        setWhiteChecked(isKingChecked(pieces, Color.WHITE));
+        setBlackChecked(isKingChecked(pieces, Color.BLACK));
+    }, [pieces]);
+
+    useEffect(() => {
+        if (isCheckmate(pieces, Color.WHITE)) {
+            setWinner(Color.BLACK);
         }
-        if (isKingChecked(pieces, Color.BLACK)) {
-            setBlackChecked(true);
-            if (isCheckmate(pieces, Color.BLACK)) {
-                setWinner(Color.WHITE);
-            }
+    }, [whiteChecked]);
+
+    useEffect(() => {
+        if (isCheckmate(pieces, Color.BLACK)) {
+            setWinner(Color.WHITE);
         }
-    }, [board]);
+    }, [blackChecked]);
 
     const switchActiveColor = () => {
-        setActiveColor(activeColor === Color.WHITE ? Color.BLACK : Color.WHITE);
+        dispatch(setActiveColor(activeColor === Color.WHITE ? Color.BLACK : Color.WHITE));
     };
 
     const renderRanks = (): Array<JSX.Element> => {
@@ -63,8 +80,9 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
             let disabled = true;
 
             if (selectedPiece) {
+                console.log(selectedPiece);
                 const isPossibleMove = selectedPiece.possibleMoves?.[rankIndex][fileIndex];
-                const isSelectedPiece = selectedPiece?.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
+                const isSelectedPiece = selectedPiece.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
 
                 if (isPossibleMove) {
                     backgroundColor = 'sandybrown';
@@ -76,6 +94,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
                 disabled = !isPossibleMove && !isSelectedPiece;
             }
 
+            console.log(disabled);
             squares.push(
                 <TouchableOpacity
                     disabled={disabled}
@@ -104,16 +123,17 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
 
         selectedPiece.updatePosition({x: file, y: rank});
 
-        setBoard([...board]);
+        dispatch(setBoard([...board]));
         setSelectedPiece(null);
 
         switchActiveColor();
     };
 
     const renderPieces = () => {
-        return pieces.map((piece, index) =>
-            piece &&
-            <Piece
+        return pieces.map((piece, index) => {
+            console.log(piece);
+            console.log(piece.color === activeColor);
+            return piece && (<Piece
                 key={`piece${index}`}
                 piece={piece}
                 interactable={piece.color === activeColor}
@@ -121,6 +141,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
                 capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.boardPosition.y][piece.boardPosition.x]}
                 captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
             />);
+        });
     };
 
     const handleCapture = (pieceToCapture: PieceData) => {
@@ -130,7 +151,7 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
 
         board[pieceToCapture.boardPosition.y][pieceToCapture.boardPosition.x] = null;
         const filteredPieces = pieces.filter((piece) => piece?.boardPosition !== pieceToCapture?.boardPosition);
-        setPieces([...filteredPieces]);
+        dispatch(setPieces([...filteredPieces]));
         commitMovement(pieceToCapture.boardPosition.y, pieceToCapture.boardPosition.x);
     };
 
