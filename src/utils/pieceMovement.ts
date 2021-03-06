@@ -30,16 +30,9 @@ export const validateMovesForCheck = (piece: PieceData, board: BoardData): MoveP
 
             const tempPieces = createPiecesListFromBoard(tempBoard);
 
-            if (selectedPiece.type === PieceType.PAWN && selectedPiece.color === Color.BLACK) {
-                console.log('piece', selectedPiece);
-                console.log('tempBoard', tempBoard);
-                console.log('tempPieces pre-calc', tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color));
-            }
-
             for (const tempPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
                 tempPiece?.calculatePossibleMoves(tempBoard, tempPieces);
             }
-            console.log('tempPieces post-calc', tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color));
 
             possibleMoves[rank][file] = !isKingChecked(tempPieces, piece.color);
         }
