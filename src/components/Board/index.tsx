@@ -6,7 +6,7 @@ import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
 import {BoardData, Color, RankData} from '../../constants/piece';
-import {forceCheckBreak, isCheckmate, isKingChecked} from '../../utils/pieceMovement';
+import {isCheckmate, isKingChecked} from '../../utils/pieceMovement';
 
 const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialActiveColor}) => {
     const [board, setBoard] = useState<BoardData>(initialBoard);
@@ -21,18 +21,16 @@ const Board: FunctionComponent<Props> = ({initialBoard, initialPieces, initialAc
         setWhiteChecked(false);
         setBlackChecked(false);
         for (const piece of pieces) {
-            piece?.calculatePossibleMoves(board, pieces);
+            piece?.updatePossibleMoves(board, pieces);
         }
         if (isKingChecked(pieces, Color.WHITE)) {
             setWhiteChecked(true);
-            forceCheckBreak(board, pieces, Color.WHITE);
             if (isCheckmate(pieces, Color.WHITE)) {
                 setWinner(Color.BLACK);
             }
         }
         if (isKingChecked(pieces, Color.BLACK)) {
             setBlackChecked(true);
-            forceCheckBreak(board, pieces, Color.BLACK);
             if (isCheckmate(pieces, Color.BLACK)) {
                 setWinner(Color.WHITE);
             }

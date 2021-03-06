@@ -1,7 +1,7 @@
 import {Animated} from 'react-native';
 import {BoardData, Color, PieceType} from '../../constants/piece';
 import theme from '../../config/theme';
-import {calculatePossibleMoves, checksKing} from '../../utils/pieceMovement';
+import {calculatePossibleMoves, checksKing, MovePossibilityData, validateMovesForCheck} from '../../utils/pieceMovement';
 
 export interface Position {
     x: number;
@@ -14,7 +14,7 @@ class PieceData {
     color: Color;
     type: PieceType;
     hasMoved: boolean = false;
-    possibleMoves: Array<Array<boolean>> | undefined = undefined;
+    possibleMoves: MovePossibilityData = [];
     checksKing: boolean = false;
 
     constructor(color: Color, type: PieceType, position: Position) {
@@ -34,14 +34,18 @@ class PieceData {
         }).start();
     }
 
-    setPossibleMoves(possibleMoves: Array<Array<boolean>>) {
-        this.possibleMoves = possibleMoves;
+    calculatePossibleMoves(board: BoardData, pieces: Array<PieceData>) {
+        this.possibleMoves = calculatePossibleMoves(this, board);
+        this.checksKing = checksKing(this, pieces);
     }
 
-    calculatePossibleMoves(board: BoardData, pieces: Array<PieceData>) {
-        const moves = calculatePossibleMoves(this, board);
-        this.setPossibleMoves(moves);
-        this.checksKing = checksKing(this, pieces);
+    validateMovesForCheck(board: BoardData) {
+        this.possibleMoves = validateMovesForCheck(this, board);
+    }
+
+    updatePossibleMoves(board: BoardData, pieces: Array<PieceData>) {
+        this.calculatePossibleMoves(board, pieces);
+        this.validateMovesForCheck(board);
     }
 }
 

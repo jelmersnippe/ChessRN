@@ -4,39 +4,48 @@ import {createDuplicateBoard, createPiecesListFromBoard} from './fen';
 
 export type MovePossibilityData = Array<Array<boolean>>;
 
-export const forceCheckBreak = (board: BoardData, pieces: Array<PieceData>, color: Color) => {
+export const validateMovesForCheck = (piece: PieceData, board: BoardData): MovePossibilityData => {
+    const possibleMoves = piece.possibleMoves;
 
-    for (const piece of pieces) {
-        if (piece.color !== color || !piece?.possibleMoves) {
-            continue;
-        }
+    if (possibleMoves.length === 0) {
+        return [];
+    }
 
-        for (let rank = 0; rank < board.length; rank++) {
-            for (let file = 0; file < board[rank].length; file++) {
-                if (!piece.possibleMoves[rank][file]) {
-                    continue;
-                }
-
-                const tempBoard = createDuplicateBoard(board);
-
-                const selectedPiece = tempBoard[piece.boardPosition.y][piece.boardPosition.x];
-                if (!selectedPiece) {
-                    continue;
-                }
-
-                selectedPiece.boardPosition = {x: file, y: rank};
-                tempBoard[rank][file] = selectedPiece;
-
-                const tempPieces = createPiecesListFromBoard(tempBoard);
-
-                for (const tempPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
-                    tempPiece?.calculatePossibleMoves(tempBoard, tempPieces);
-                }
-
-                piece.possibleMoves[rank][file] = !isKingChecked(tempPieces, piece.color);
+    for (let rank = 0; rank < board.length; rank++) {
+        for (let file = 0; file < board[rank].length; file++) {
+            if (!possibleMoves[rank][file]) {
+                continue;
             }
+
+            const tempBoard = createDuplicateBoard(board);
+
+            const selectedPiece = tempBoard[piece.boardPosition.y][piece.boardPosition.x];
+            if (!selectedPiece) {
+                continue;
+            }
+
+            selectedPiece.boardPosition = {x: file, y: rank};
+            tempBoard[rank][file] = selectedPiece;
+            tempBoard[piece.boardPosition.y][piece.boardPosition.x] = null;
+
+            const tempPieces = createPiecesListFromBoard(tempBoard);
+
+            if (selectedPiece.type === PieceType.PAWN && selectedPiece.color === Color.BLACK) {
+                console.log('piece', selectedPiece);
+                console.log('tempBoard', tempBoard);
+                console.log('tempPieces pre-calc', tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color));
+            }
+
+            for (const tempPiece of tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color)) {
+                tempPiece?.calculatePossibleMoves(tempBoard, tempPieces);
+            }
+            console.log('tempPieces post-calc', tempPieces.filter((tempPiece) => tempPiece.color !== selectedPiece.color));
+
+            possibleMoves[rank][file] = !isKingChecked(tempPieces, piece.color);
         }
     }
+
+    return possibleMoves;
 };
 
 export const calculatePossibleMoves = (piece: PieceData, board: BoardData): MovePossibilityData => {
