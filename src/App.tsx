@@ -11,7 +11,11 @@ const App = () => {
             <StatusBar barStyle={'dark-content'}/>
             <SafeAreaView style={styles.container}>
                 <Text style={styles.title}>ChessRN</Text>
-                <Board initialBoard={gameState.board} pieces={gameState.pieces}/>
+                <Board
+                    initialBoard={gameState.board}
+                    pieces={gameState.pieces}
+                    initialActiveColor={gameState.activeColor}
+                />
             </SafeAreaView>
         </>
     );

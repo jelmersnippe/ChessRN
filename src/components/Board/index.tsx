@@ -6,12 +6,17 @@ import {Props} from './Props';
 import Piece from '../Piece';
 import PieceData from '../Piece/PieceData';
 import {calculatePossibleMoves} from '../../utils/pieceMovement';
-import {RankData} from '../../constants/piece';
+import {BoardData, Color, RankData} from '../../constants/piece';
 
-const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
-    const [board, setBoard] = useState(initialBoard);
+const Board: FunctionComponent<Props> = ({initialBoard, pieces, initialActiveColor}) => {
+    const [board, setBoard] = useState<BoardData>(initialBoard);
+    const [activeColor, setActiveColor] = useState<Color>(initialActiveColor);
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
     const [possibleMoves, setPossibleMoves] = useState<Array<Array<boolean>> | undefined>(undefined);
+
+    const switchActiveColor = () => {
+        setActiveColor(activeColor === Color.WHITE ? Color.BLACK : Color.WHITE);
+    };
 
     const renderRanks = (): Array<JSX.Element> => {
         const ranks: Array<JSX.Element> = [];
@@ -30,11 +35,11 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
     const renderSquares = (rankIndex: number, rank: RankData): Array<JSX.Element> => {
         const squares: Array<JSX.Element> = [];
 
-        for (let i = 0; i < rank.length; i++) {
-            const isPossibleMove = possibleMoves?.[rankIndex][i];
-            const isSelectedPiece = selectedPiece?.boardPosition.x === i && selectedPiece?.boardPosition.y === rankIndex;
+        for (let fileIndex = 0; fileIndex < rank.length; fileIndex++) {
+            const isPossibleMove = possibleMoves?.[rankIndex][fileIndex];
+            const isSelectedPiece = selectedPiece?.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
 
-            let backgroundColor = (i + rankIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile;
+            let backgroundColor = (fileIndex + rankIndex) % 2 === 0 ? theme.colors.lightTile : theme.colors.darkTile;
 
             if (isPossibleMove) {
                 backgroundColor = 'sandybrown';
@@ -46,28 +51,31 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
             squares.push(
                 <TouchableOpacity
                     disabled={!selectedPiece || !isPossibleMove || isSelectedPiece}
-                    key={`${rankIndex}-${i}`}
+                    key={`${rankIndex}-${fileIndex}`}
                     style={{
                         ...styles.square,
                         backgroundColor: backgroundColor
                     }}
-                    onPress={() => {
-                        if (selectedPiece) {
-                            const updatedBoard = board;
-                            updatedBoard[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
-                            updatedBoard[rankIndex][i] = selectedPiece;
-                            setBoard([...updatedBoard]);
-
-                            selectedPiece?.updatePosition({x: i, y: rankIndex});
-                            setSelectedPiece(null);
-                            setPossibleMoves(undefined);
-                        }
-                    }}
+                    onPress={() => commitMovement(rankIndex, fileIndex)}
                 />
             );
         }
 
         return squares;
+    };
+
+    const commitMovement = (rank: number, file: number) => {
+        if (selectedPiece) {
+            board[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
+            board[rank][file] = selectedPiece;
+            setBoard([...board]);
+
+            selectedPiece?.updatePosition({x: file, y: rank});
+            setSelectedPiece(null);
+            setPossibleMoves(undefined);
+
+            switchActiveColor();
+        }
     };
 
     const renderPieces = () => {
@@ -77,15 +85,18 @@ const Board: FunctionComponent<Props> = ({initialBoard, pieces}) => {
                 key={`piece${index}`}
                 movementAction={(pieceToMove) => handleMovement(pieceToMove)}
                 piece={piece}
+                interactable={piece.color === activeColor}
             />);
     };
 
     const handleMovement = (piece: PieceData) => {
-        setSelectedPiece(piece);
-        console.log('piece:', piece);
-        console.log('board:', board);
-        const moves = calculatePossibleMoves(piece, board);
-        setPossibleMoves(moves);
+        if (board) {
+            setSelectedPiece(piece);
+            console.log('piece:', piece);
+            console.log('board:', board);
+            const moves = calculatePossibleMoves(piece, board);
+            setPossibleMoves(moves);
+        }
     };
 
     return (

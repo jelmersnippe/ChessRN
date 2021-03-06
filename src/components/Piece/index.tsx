@@ -4,7 +4,7 @@ import styles from './styles';
 import {Props} from './Props';
 import {pieceImages} from '../../constants/piece';
 
-const Piece: FunctionComponent<Props> = ({piece, movementAction}) => {
+const Piece: FunctionComponent<Props> = ({piece, movementAction, interactable}) => {
 
     return (
         <Animated.View
@@ -21,6 +21,7 @@ const Piece: FunctionComponent<Props> = ({piece, movementAction}) => {
                 onPress={() => {
                     movementAction(piece);
                 }}
+                disabled={!interactable}
             >
                 <Image
                     style={styles.image}

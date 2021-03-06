@@ -67,7 +67,7 @@ export const fenToJson = (fen: string) => {
     const pieces: Array<PieceData | null> = board.map((rank) =>
         rank.filter((file) => file !== null)
     ).flat(1);
-    const activePlayer: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
+    const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
 
     const halfMoveClock = parseInt(fenElements[4], 10);
@@ -76,7 +76,7 @@ export const fenToJson = (fen: string) => {
     return {
         board,
         pieces,
-        activePlayer,
+        activeColor,
         castlingPossibilities,
         halfMoveClock,
         fullMoveNumber
