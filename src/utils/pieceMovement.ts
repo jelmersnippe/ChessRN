@@ -12,7 +12,7 @@ export enum CheckedState {
     STALEMATE = 'Stalemate'
 }
 
-export const validateMovesForCheck = (currentPosition: Position, possibleMoves: MovePossibilityData, opposingColor: Color, board: BoardData): MovePossibilityData => {
+export const validateMovesForCheck = (currentPosition: Position, possibleMoves: MovePossibilityData, opposingColor: Color, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
     if (possibleMoves.length === 0) {
         return [];
     }
@@ -42,7 +42,7 @@ export const validateMovesForCheck = (currentPosition: Position, possibleMoves: 
             const opposingPieces = pieces[opposingColor];
 
             for (const opposingPiece of opposingPieces) {
-                const opposingPossibleMoves = calculatePossibleMoves(opposingPiece, tempBoard);
+                const opposingPossibleMoves = calculatePossibleMoves(opposingPiece, tempBoard, enPassant);
                 const opposingPieceChecksKing = canCaptureKing(opposingPossibleMoves, ownPieces);
 
                 // By making this move an opposing piece can capture our king, so the move is invalid
@@ -58,7 +58,7 @@ export const validateMovesForCheck = (currentPosition: Position, possibleMoves: 
     return possibleMoves;
 };
 
-export const calculatePossibleMoves = (piece: PieceData, board: BoardData): MovePossibilityData => {
+export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
     let possibleMoves: MovePossibilityData = [];
 
     switch (piece.type) {
@@ -85,7 +85,7 @@ export const calculatePossibleMoves = (piece: PieceData, board: BoardData): Move
             possibleMoves = diagonalMovement(piece, board);
             break;
         case PieceType.PAWN:
-            possibleMoves = pawnMovement(piece, board);
+            possibleMoves = pawnMovement(piece, board, enPassant);
             break;
     }
 
@@ -354,7 +354,7 @@ export const anyCastlesAvailable = (castlingAvailabilities: CastlingAvailability
     return false;
 };
 
-const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
+const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
     const rankDelta = piece.color === Color.WHITE ? -1 : 1;
@@ -368,10 +368,17 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
         if (piece.position.file + fileDelta >= 0 && piece.position.file + fileDelta < 8) {
             const move = checkSquare({rank: piece.position.rank + rankDelta, file: piece.position.file + fileDelta}, piece.color, board);
 
-            movementPossible[piece.position.rank + rankDelta][piece.position.file + fileDelta] = {
-                valid: fileDelta === 0 ? (move.valid && !move.capture) : move.capture,
-                capture: fileDelta === 0 ? false : move.capture
-            };
+            if (enPassant && enPassant.rank === piece.position.rank + rankDelta && enPassant.file === piece.position.file + fileDelta) {
+                movementPossible[piece.position.rank + rankDelta][piece.position.file + fileDelta] = {
+                    valid: true,
+                    capture: true
+                };
+            } else {
+                movementPossible[piece.position.rank + rankDelta][piece.position.file + fileDelta] = {
+                    valid: fileDelta === 0 ? (move.valid && !move.capture) : move.capture,
+                    capture: fileDelta === 0 ? false : move.capture
+                };
+            }
         }
     }
 

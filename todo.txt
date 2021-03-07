@@ -1,5 +1,5 @@
 - Move piece capturing to epics
-- Implement En Passant
+- Implement En Passant capturing
 - Implement pawn promotion
 
 - Clean up the Diagonal and Orthogonal movement scripts
@@ -7,3 +7,4 @@
 - Add move history
 - Re-add animated movement
 - Turn the board state back into a fen string
+- Clean up possible move calculation -> pass in full state & simplify switches

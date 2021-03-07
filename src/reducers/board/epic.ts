@@ -55,7 +55,7 @@ const updatePossibleMovesEpic: Epic = (action$, state$: StateObservable<RootStat
     filter(isActionOf(calculatePossibleMovesAction)),
     filter(() => state$.value.board.board !== null),
     map(() => {
-        const {board} = state$.value.board;
+        const {board, enPassant} = state$.value.board;
 
         if (!board) {
             throw new Error('No board');
@@ -69,8 +69,8 @@ const updatePossibleMovesEpic: Epic = (action$, state$: StateObservable<RootStat
             for (const piece of pieces[color]) {
                 const opposingColor = getOppositeColor(piece.color);
 
-                const possibleMoves = calculatePossibleMoves(piece, board);
-                const validatedPossibleMoves = validateMovesForCheck(piece.position, possibleMoves, opposingColor, board);
+                const possibleMoves = calculatePossibleMoves(piece, board, enPassant);
+                const validatedPossibleMoves = validateMovesForCheck(piece.position, possibleMoves, opposingColor, board, enPassant);
 
                 const checksKing = canCaptureKing(validatedPossibleMoves, pieces[opposingColor]);
 
@@ -177,7 +177,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
 
         return of(
             setBoardAction([...updatedBoard]),
-            setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? position : undefined)
+            setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? {rank: position.rank + Math.sign(oldPosition.rank - position.rank), file: position.file} : undefined)
         );
     })
 );
