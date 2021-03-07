@@ -7,7 +7,7 @@ import {PieceData} from '../Piece/PieceData';
 import {Color, RankData} from '../../constants/piece';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
-import {BoardActionTypes, commitMovementAction, setInitialStateAction, setPiecesAction} from '../../reducers/board/actions';
+import {BoardActionTypes, commitMovementAction, setInitialStateAction} from '../../reducers/board/actions';
 import {createPiecesListFromBoard} from '../../utils/fen';
 
 const Board: FunctionComponent = () => {
@@ -99,35 +99,19 @@ const Board: FunctionComponent = () => {
                     interactable={piece.color === activeColor}
                     selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
                     capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.position.rank][piece.position.file].valid}
-                    captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
+                    captureAction={(pieceToCapture) => commitMovement(pieceToCapture.position.rank, pieceToCapture.position.file)}
                 />);
             })
         );
     };
 
     const commitMovement = (rank: number, file: number) => {
-        if (!selectedPiece || !board) {
+        if (!selectedPiece) {
             return;
         }
 
         dispatch(commitMovementAction({piece: selectedPiece, position: {rank, file}}));
-
         setSelectedPiece(null);
-    };
-
-    const handleCapture = (pieceToCapture: PieceData) => {
-        if (!selectedPiece || !board) {
-            return;
-        }
-        const pieces = createPiecesListFromBoard(board);
-        board[pieceToCapture.position.rank][pieceToCapture.position.file] = null;
-        const filteredPieces = pieces[pieceToCapture.color].filter((piece) => piece?.position !== pieceToCapture?.position);
-        dispatch(setPiecesAction({
-            pieces: filteredPieces,
-            color: pieceToCapture.color
-        }));
-
-        commitMovement(pieceToCapture.position.rank, pieceToCapture.position.file);
     };
 
     return (

@@ -16,13 +16,6 @@ export const setActiveColorAction = createAction(
     'SET_ACTIVE_COLOR'
 )<Color>();
 
-export const setPiecesAction = createAction(
-    'SET_PIECES'
-)<{
-    color: Color;
-    pieces: Array<PieceData>;
-}>();
-
 export const setChecksAction = createAction(
     'SET_CHECKS'
 )<Partial<{ [key in Color]: CheckedState | false }>>();
@@ -62,7 +55,6 @@ export const setEnPassantAction = createAction(
 export type BoardActionTypes =
     ActionType<typeof setActiveColorAction> |
     ActionType<typeof setBoardAction> |
-    ActionType<typeof setPiecesAction> |
     ActionType<typeof setChecksAction> |
     ActionType<typeof setPossibleMovesAction> |
     ActionType<typeof calculatePossibleMovesAction> |

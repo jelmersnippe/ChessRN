@@ -293,6 +293,7 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
             }, piece.color, board);
         }
 
+        // TODO: pass these as parameters by passing the state from the calculate possible moves epic
         const isChecked = store.getState().board.checks[piece.color];
         const availableCastles = store.getState().board.castlesAvailable[piece.color];
 

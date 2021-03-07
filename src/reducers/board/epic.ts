@@ -69,6 +69,7 @@ const updatePossibleMovesEpic: Epic = (action$, state$: StateObservable<RootStat
             for (const piece of pieces[color]) {
                 const opposingColor = getOppositeColor(piece.color);
 
+                // TODO: Pass the state to these instead of passing everything seperately
                 const possibleMoves = calculatePossibleMoves(piece, board, enPassant);
                 const validatedPossibleMoves = validateMovesForCheck(piece.position, possibleMoves, opposingColor, board, enPassant);
 
@@ -177,7 +178,10 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
 
         return of(
             setBoardAction([...updatedBoard]),
-            setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? {rank: position.rank + Math.sign(oldPosition.rank - position.rank), file: position.file} : undefined)
+            setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? {
+                rank: position.rank + Math.sign(oldPosition.rank - position.rank),
+                file: position.file
+            } : undefined)
         );
     })
 );
