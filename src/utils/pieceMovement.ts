@@ -357,52 +357,32 @@ export const anyCastlesAvailable = (castlingAvailabilities: CastlingAvailability
 const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    const squaresToCheck = piece.hasMoved ? 1 : 2;
+    const rankDelta = piece.color === Color.WHITE ? -1 : 1;
 
-    for (let moveAmount = 1; moveAmount <= squaresToCheck; moveAmount++) {
-        const fileDelta = piece.color === Color.WHITE ? -moveAmount : moveAmount;
-        const rankToCheck = piece.position.rank + fileDelta;
+    // TODO: Reached the final line -> should be promoted
+    if (piece.position.rank + rankDelta < 0 || piece.position.rank + rankDelta > 7) {
+        return movementPossible;
+    }
 
-        if (rankToCheck < 0 || rankToCheck + fileDelta >= 8) {
-            break;
+    for (let fileDelta = -1; fileDelta <= 1; fileDelta++) {
+        if (piece.position.file + fileDelta >= 0 && piece.position.file + fileDelta < 8) {
+            const move = checkSquare({rank: piece.position.rank + rankDelta, file: piece.position.file + fileDelta}, piece.color, board);
+
+            movementPossible[piece.position.rank + rankDelta][piece.position.file + fileDelta] = {
+                valid: fileDelta === 0 ? (move.valid && !move.capture) : move.capture,
+                capture: fileDelta === 0 ? false : move.capture
+            };
         }
+    }
 
-        movementPossible[rankToCheck][piece.position.file] = checkSquare({rank: rankToCheck, file: piece.position.file}, piece.color, board);
-
-        /* TODO: En passant
-           If the pawn is on the 5th rank (4th for black)
-           and there is an enemy pawn on an adjacent file that has moved two steps in the previous turn
-           it may be captured by crossing it diagonally
-        */
-        // Check diagonals for captures
-        if (moveAmount === 1) {
-            if (piece.position.file - 1 >= 0) {
-                const diagonalSquare = checkSquare({
-                    rank: rankToCheck,
-                    file: piece.position.file - 1
-                }, piece.color, board);
-
-                movementPossible[rankToCheck][piece.position.file - 1] = {
-                    valid: diagonalSquare.capture,
-                    capture: diagonalSquare.capture
-                };
-            }
-            if (piece.position.file + 1 < 8) {
-                const diagonalSquare = checkSquare({
-                    rank: rankToCheck,
-                    file: piece.position.file + 1
-                }, piece.color, board);
-
-                movementPossible[rankToCheck][piece.position.file - 1] = {
-                    valid: diagonalSquare.capture,
-                    capture: diagonalSquare.capture
-                };
-            }
-        }
-
-        if (!movementPossible[rankToCheck][piece.position.file].valid) {
-            break;
-        }
+    // If the pawn hasn't moved yet and it can move one step forward
+    // Check if a double push is possible
+    if (!piece.hasMoved && movementPossible[piece.position.rank + rankDelta][piece.position.file]) {
+        const move = checkSquare({rank: piece.position.rank + (rankDelta * 2), file: piece.position.file}, piece.color, board);
+        movementPossible[piece.position.rank + (rankDelta * 2)][piece.position.file] = {
+            valid: (move.valid && !move.capture),
+            capture: false
+        };
     }
 
     return movementPossible;

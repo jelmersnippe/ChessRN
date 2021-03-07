@@ -1,5 +1,6 @@
 - Move piece capturing to epics
 - Implement En Passant
+- Implement pawn promotion
 
 - Clean up the Diagonal and Orthogonal movement scripts
 - Clean up epics -> move large logic blocks to external functions

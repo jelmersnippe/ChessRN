@@ -152,12 +152,6 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
         updatedBoard[piece.position.rank][piece.position.file] = null;
         updatedBoard[position.rank][position.file] = piece;
 
-        // TODO: Add animated movement back into Piece display
-        //         Animated.timing(this.displayPosition, {
-        //             toValue: {x: position.x * theme.TILE_SIZE, y: position.y * theme.TILE_SIZE},
-        //             duration: 150,
-        //             useNativeDriver: true
-        //         }).start();
         piece.hasMoved = true;
         piece.position = {rank: position.rank, file: position.file};
 
