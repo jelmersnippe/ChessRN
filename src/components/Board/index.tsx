@@ -4,11 +4,11 @@ import styles from './styles';
 import theme from '../../config/theme';
 import Piece from '../Piece';
 import {PieceData} from '../Piece/PieceData';
-import {Color, RankData} from '../../constants/piece';
+import {Color, PieceType, RankData} from '../../constants/piece';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
 import {BoardActionTypes, setBoardAction, setInitialStateAction, setPiecesAction} from '../../reducers/board/actions';
-import {createPiecesListFromBoard} from '../../utils/fen';
+import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
 
 const Board: FunctionComponent = () => {
     const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -89,8 +89,9 @@ const Board: FunctionComponent = () => {
             return;
         }
 
-        const updatedBoard = board;
+        const updatedBoard = createDuplicateBoard(board);
 
+        const oldPosition = {rank: selectedPiece.position.rank, file: selectedPiece.position.file};
         updatedBoard[selectedPiece.position.rank][selectedPiece.position.file] = null;
         updatedBoard[rank][file] = selectedPiece;
 
@@ -103,7 +104,24 @@ const Board: FunctionComponent = () => {
         selectedPiece.hasMoved = true;
         selectedPiece.position = {rank, file};
 
-        dispatch(setBoardAction([...board]));
+        // Castle move
+        if (selectedPiece.type === PieceType.KING && Math.abs(oldPosition.file - file) > 1) {
+            const currentRookFile = file < 4 ? 0 : 7;
+            const rook = updatedBoard[rank][currentRookFile];
+
+            if (!rook) {
+                return;
+            }
+
+            const newRookFile = file < 4 ? file + 1 : file - 1;
+
+            updatedBoard[rank][currentRookFile] = null;
+            updatedBoard[rank][newRookFile] = rook;
+            rook.hasMoved = true;
+            rook.position = {rank: rank, file: newRookFile};
+        }
+
+        dispatch(setBoardAction([...updatedBoard]));
         setSelectedPiece(null);
     };
 

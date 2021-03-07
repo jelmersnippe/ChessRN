@@ -2,6 +2,7 @@ import {PieceData, Position} from '../components/Piece/PieceData';
 import {BoardData, Color, PieceType} from '../constants/piece';
 import {createDuplicateBoard, createPiecesListFromBoard} from './fen';
 import {CastlingAvailability} from '../reducers/board';
+import store from '../config/store';
 
 export type MovePossibilityData = Array<Array<{ valid: boolean, capture: boolean }>>;
 
@@ -275,15 +276,6 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
             continue;
         }
 
-        /*
-            TODO: Castling
-            If neither the king nor the rook has moved yet
-            The king is not in check
-            There are no pieces between the king and the rook
-            And none of the square in between the king and the rook are under attack (can be moved to by an enemy piece)
-            The king may shift two spaces towards the rook, and the rook may jump to the opposite side of the king
-        */
-
         for (let file = piece.position.file - 1; file <= piece.position.file + 1; file++) {
             // Outside of the board
             if (file < 0 || file >= 8) {
@@ -300,9 +292,45 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
                 file
             }, piece.color, board);
         }
+
+        const isChecked = store.getState().board.checks[piece.color];
+        const availableCastles = store.getState().board.castlesAvailable[piece.color];
+
+        console.log(piece);
+        if (!isChecked && !piece.hasMoved) {
+            movementPossible[piece.position.rank][piece.position.file - 2].valid = availableCastles.queenSide && validateCastle(piece, 'queen', board);
+            movementPossible[piece.position.rank][piece.position.file + 2].valid = availableCastles.kingSide && validateCastle(piece, 'king', board);
+        }
     }
 
     return movementPossible;
+};
+
+const validateCastle = (king: PieceData, side: 'queen' | 'king', board: BoardData): boolean => {
+    const opposingPieces = createPiecesListFromBoard(board)[getOppositeColor(king.color)];
+
+    for (
+        let file = side === 'queen' ? king.position.file - 1 : king.position.file + 1;
+        side === 'queen' ? file > 0 : file < 7;
+        side === 'queen' ? file-- : file++
+    ) {
+        const move = checkSquare({
+            rank: king.position.rank,
+            file
+        }, king.color, board);
+
+        if (!move.valid || move.capture) {
+            return false;
+        }
+
+        for (const opposingPiece of opposingPieces) {
+            if (opposingPiece.possibleMoves[king.position.rank][file].valid) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 };
 
 export const getCastlingAvailability = (pieces: Array<PieceData>): {kingSide: boolean, queenSide: boolean} => {

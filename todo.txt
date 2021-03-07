@@ -1,7 +1,6 @@
+- Move piece movement & capturing to epics
 - Turn the board state back into a fen string
-- Create CastlingPossibilties interface and simplify parseFenCastlingPossibilities
 
 - Clean up the Diagonal and Orthogonal movement scripts
 - Implement En Passant
-- Implement castling
 - Re-add animated movement

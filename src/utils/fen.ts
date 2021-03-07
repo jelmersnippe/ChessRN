@@ -95,12 +95,7 @@ export const createDuplicateBoard = (board: BoardData): BoardData => {
     return board.map((rank) =>
         rank.map((file) => {
             return file ?
-                {
-                    color: file.color,
-                    type: file.type,
-                    position: file.position,
-                    possibleMoves: file.possibleMoves
-                }
+                {...file}
                 : null;
         })
     );
