@@ -143,7 +143,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
     filter(() => state$.value.board.board !== null),
     filter((action) => action.payload.piece.possibleMoves[action.payload.position.rank][action.payload.position.file].valid),
     mergeMap((action) => {
-        const {board} = state$.value.board;
+        const {board, enPassant} = state$.value.board;
         const {piece, position} = action.payload;
 
         if (!board) {
@@ -174,6 +174,11 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
             updatedBoard[position.rank][newRookFile] = rook;
             rook.hasMoved = true;
             rook.position = {rank: position.rank, file: newRookFile};
+        }
+
+        // En passant
+        if (piece.type === PieceType.PAWN && enPassant && position.rank === enPassant.rank && position.file === enPassant.file) {
+            updatedBoard[oldPosition.rank][position.file] = null;
         }
 
         return of(
