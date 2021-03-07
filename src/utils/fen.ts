@@ -50,7 +50,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
 import {BoardData, Color, PieceType, RankData} from '../constants/piece';
 import {PieceData} from '../components/Piece/PieceData';
-import {CastlesAvailable} from '../reducers/board';
+import {CastlingAvailability} from '../reducers/board';
 
 const fenPieces = {
     p: 'Pawn',
@@ -66,7 +66,7 @@ export const fenToJson = (fen: string) => {
 
     const board: BoardData = parseFenBoard(fenElements[0]);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
-    const castlingPossibilities: CastlesAvailable = parseFenCastlingPossibilities(fenElements[2]);
+    const castlingPossibilities: CastlingAvailability = parseFenCastlingPossibilities(fenElements[2]);
 
     const halfMoveClock = parseInt(fenElements[4], 10);
     const fullMoveNumber = parseInt(fenElements[5], 10);
@@ -162,7 +162,7 @@ const parseFenBoard = (fenBoard: string): BoardData => {
     return board;
 };
 
-const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): CastlesAvailable => {
+const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): CastlingAvailability => {
     return {
         [Color.WHITE]: {
             kingSide: fenCastlingPossibilities.includes('K'),

@@ -4,7 +4,7 @@ import {
     BoardActionTypes,
     increaseTurnsAction,
     setActiveColorAction,
-    setBoardAction,
+    setBoardAction, setCastlingAvailabilityAction,
     setChecksAction,
     setInitialStateAction,
     setPossibleMovesAction
@@ -13,7 +13,7 @@ import {Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
 import {fenToJson} from '../../utils/fen';
 
-export type CastlesAvailable = {
+export type CastlingAvailability = {
     [key in Color]: {
         queenSide: boolean;
         kingSide: boolean;
@@ -23,7 +23,7 @@ export type CastlesAvailable = {
 export interface BoardState {
     board: BoardData | null;
     activeColor: Color;
-    castlesAvailable: CastlesAvailable;
+    castlesAvailable: CastlingAvailability;
     enPassant?: Position;
     checks: { [key in Color]: CheckedState | false };
     turns: number;
@@ -94,6 +94,11 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
             return {
                 ...state,
                 turns: state.turns + 1
+            };
+        case getType(setCastlingAvailabilityAction):
+            return {
+                ...state,
+                castlesAvailable: action.payload
             };
         default:
             return state;

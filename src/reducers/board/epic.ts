@@ -1,19 +1,23 @@
 import {combineEpics, Epic, StateObservable} from 'redux-observable';
 import {
     calculatePossibleMovesAction,
+    checkCastlingAvailabilityAction,
     increaseTurnsAction,
     setActiveColorAction,
     setBoardAction,
+    setCastlingAvailabilityAction,
     setChecksAction,
     setInitialStateAction,
     setPossibleMovesAction
 } from './actions';
 import {filter, map, mapTo, mergeMap} from 'rxjs/operators';
 import {
+    anyCastlesAvailable,
     calculatePossibleMoves,
-    canCaptureKing,
+    canCaptureKing, getCastlingAvailability,
     getCheckedStatus,
-    getMovesLeft, getOppositeColor,
+    getMovesLeft,
+    getOppositeColor,
     isChecked,
     validateMovesForCheck
 } from '../../utils/pieceMovement';
@@ -22,6 +26,7 @@ import {isActionOf} from 'typesafe-actions';
 import {Color} from '../../constants/piece';
 import {of} from 'rxjs';
 import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
+import {CastlingAvailability} from './index';
 
 const setInitialStateEpic: Epic = (action$) => action$.pipe(
     filter(isActionOf(setInitialStateAction)),
@@ -32,6 +37,7 @@ const setBoardEpic: Epic = (action$, state$: StateObservable<RootState>) => acti
     filter(isActionOf(setBoardAction)),
     mergeMap(() => of(
         calculatePossibleMovesAction(),
+        checkCastlingAvailabilityAction(),
         setActiveColorAction(getOppositeColor(state$.value.board.activeColor))
     ))
 );
@@ -81,11 +87,13 @@ const validateChecksEpic: Epic = (action$, state$: StateObservable<RootState>) =
     filter(() => state$.value.board.board !== null),
     filter(() => state$.value.board.turns > 1),
     map(() => {
-        if (!state$.value.board.board) {
-            return;
+        const {board} = state$.value.board;
+
+        if (!board) {
+            throw new Error('No board');
         }
 
-        const pieces = createPiecesListFromBoard(state$.value.board.board);
+        const pieces = createPiecesListFromBoard(board);
         const movesLeft = {
             [Color.WHITE]: getMovesLeft(pieces[Color.WHITE]),
             [Color.BLACK]: getMovesLeft(pieces[Color.BLACK])
@@ -104,12 +112,35 @@ const validateChecksEpic: Epic = (action$, state$: StateObservable<RootState>) =
     })
 );
 
+const checkCastlingAvailabilityEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
+    filter(isActionOf(checkCastlingAvailabilityAction)),
+    filter(() => state$.value.board.board !== null),
+    filter(() => anyCastlesAvailable(state$.value.board.castlesAvailable)),
+    map(() => {
+        const {board} = state$.value.board;
+
+        if (!board) {
+            throw new Error('No board');
+        }
+
+        const pieces = createPiecesListFromBoard(board);
+
+        const availableCastles: CastlingAvailability = {
+            [Color.WHITE]: getCastlingAvailability(pieces[Color.WHITE]),
+            [Color.BLACK]: getCastlingAvailability(pieces[Color.BLACK])
+        };
+
+        return setCastlingAvailabilityAction(availableCastles);
+    })
+);
+
 const boardEpic: Epic = combineEpics(
     setInitialStateEpic,
     setBoardEpic,
     increaseTurnsEpic,
     updatePossibleMovesEpic,
-    validateChecksEpic
+    validateChecksEpic,
+    checkCastlingAvailabilityEpic
 );
 
 export default boardEpic;

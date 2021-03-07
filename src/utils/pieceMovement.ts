@@ -1,6 +1,7 @@
 import {PieceData, Position} from '../components/Piece/PieceData';
 import {BoardData, Color, PieceType} from '../constants/piece';
 import {createDuplicateBoard, createPiecesListFromBoard} from './fen';
+import {CastlingAvailability} from '../reducers/board';
 
 export type MovePossibilityData = Array<Array<{ valid: boolean, capture: boolean }>>;
 
@@ -304,26 +305,27 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
     return movementPossible;
 };
 
-// const validateQueenSideCastle = (piece: PieceData, board: BoardData): boolean => {
-//     if (piece.hasMoved || piece.type !== PieceType.KING) {
-//         return false;
-//     }
-//
-//     const queenSideRook = board[piece.position.rank][0];
-//     if (!queenSideRook || queenSideRook.type !== PieceType.ROOK || queenSideRook.hasMoved) {
-//         return false;
-//     }
-//
-//     for (let file = piece.position.file; file >= 0; file--) {
-//         // Check if any enemy pieces have any of these fields as a possible move
-//     }
-//
-//     return false;
-// };
-//
-// const validateKingSideCastle = () => {
-//
-// };
+export const getCastlingAvailability = (pieces: Array<PieceData>): {kingSide: boolean, queenSide: boolean} => {
+    const king = pieces.find((piece) => piece.type === PieceType.KING && !piece.hasMoved);
+    const queenSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && !piece.hasMoved && piece.position.file === 0);
+    const kingSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && !piece.hasMoved && piece.position.file === 7);
+
+    return {
+        kingSide: !!king && !!kingSideRook,
+        queenSide: !!king && !!queenSideRook
+    };
+};
+
+export const anyCastlesAvailable = (castlingAvailabilities: CastlingAvailability) =>  {
+    const colors = Object.keys(castlingAvailabilities) as Array<Color>;
+    for (const color of colors) {
+        if (castlingAvailabilities[color].kingSide || castlingAvailabilities[color].queenSide) {
+            return true;
+        }
+    }
+
+    return false;
+};
 
 const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
@@ -342,7 +344,7 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
 
         /* TODO: En passant
            If the pawn is on the 5th rank (4th for black)
-           and there is an enemy pawn on an adjecent file that has moved two steps in the previous turn
+           and there is an enemy pawn on an adjacent file that has moved two steps in the previous turn
            it may be captured by crossing it diagonally
         */
         // Check diagonals for captures

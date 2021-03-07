@@ -2,7 +2,7 @@ import {ActionType, createAction} from 'typesafe-actions';
 import {BoardData, Color} from '../../constants/piece';
 import {PieceData, Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
-import {BoardState} from './index';
+import {BoardState, CastlingAvailability} from './index';
 
 export const setInitialStateAction = createAction(
     'SET_INITIAL_STATE'
@@ -47,6 +47,13 @@ export const setPossibleMovesAction = createAction(
     'SET_POSSIBLE_MOVES'
 )<BoardData>();
 
+export const checkCastlingAvailabilityAction = createAction(
+    'CHECK_CASTLING_AVAILABILITY'
+)<void>();
+
+export const setCastlingAvailabilityAction = createAction(
+    'SET_CASTLING_AVAILABILITY'
+)<CastlingAvailability>();
 
 export type BoardActionTypes =
     ActionType<typeof setActiveColorAction> |
@@ -58,4 +65,6 @@ export type BoardActionTypes =
     ActionType<typeof increaseTurnsAction> |
     ActionType<typeof setInitialStateAction> |
     ActionType<typeof commitMovementAction> |
-    ActionType<typeof handleCaptureAction>
+    ActionType<typeof handleCaptureAction> |
+    ActionType<typeof checkCastlingAvailabilityAction> |
+    ActionType<typeof setCastlingAvailabilityAction>
