@@ -376,6 +376,10 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
                 };
             }
         }
+
+        if (!movementPossible[rankToCheck][piece.position.file].valid) {
+            break;
+        }
     }
 
     return movementPossible;
