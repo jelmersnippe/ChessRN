@@ -177,7 +177,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
 
         return of(
             setBoardAction([...updatedBoard]),
-            setEnPassantAction(action.payload.position)
+            setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? position : undefined)
         );
     })
 );

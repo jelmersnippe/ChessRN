@@ -57,7 +57,7 @@ export const setCastlingAvailabilityAction = createAction(
 
 export const setEnPassantAction = createAction(
     'SET_EN_PASSANT'
-)<Position>();
+)<Position | undefined>();
 
 export type BoardActionTypes =
     ActionType<typeof setActiveColorAction> |
