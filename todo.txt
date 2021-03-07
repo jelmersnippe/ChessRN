@@ -1,5 +1,4 @@
 - Turn the board state back into a fen string
-- Add function to get opposite color (to remove all the Color terniaries)
 - Create CastlingPossibilties interface and simplify parseFenCastlingPossibilities
 
 - Clean up the Diagonal and Orthogonal movement scripts

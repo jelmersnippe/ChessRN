@@ -36,7 +36,7 @@ export const validateMovesForCheck = (currentPosition: Position, possibleMoves: 
             tempBoard[currentPosition.rank][currentPosition.file] = null;
 
             const pieces = createPiecesListFromBoard(tempBoard);
-            const ownPieces = pieces[opposingColor === Color.WHITE ? Color.BLACK : Color.WHITE];
+            const ownPieces = pieces[getOppositeColor(opposingColor)];
             const opposingPieces = pieces[opposingColor];
 
             for (const opposingPiece of opposingPieces) {
@@ -408,7 +408,7 @@ export const canCaptureKing = (possibleMoves: MovePossibilityData, opposingPiece
 };
 
 export const isChecked = (pieces: { [key in Color]: Array<PieceData> }, colorToCheck: Color): boolean => {
-    const oppositeColor: Color = colorToCheck === Color.WHITE ? Color.BLACK : Color.WHITE;
+    const oppositeColor = getOppositeColor(colorToCheck);
     return !!pieces[oppositeColor].find((piece) => piece.checksKing);
 };
 
@@ -424,3 +424,5 @@ export const getCheckedStatus = (checked: boolean, movesLeft: number): CheckedSt
 
     return checked ? CheckedState.CHECKMATE : CheckedState.STALEMATE;
 };
+
+export const getOppositeColor = (color: Color) => color === Color.WHITE ? Color.BLACK : Color.WHITE;

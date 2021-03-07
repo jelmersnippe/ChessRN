@@ -13,7 +13,7 @@ import {
     calculatePossibleMoves,
     canCaptureKing,
     getCheckedStatus,
-    getMovesLeft,
+    getMovesLeft, getOppositeColor,
     isChecked,
     validateMovesForCheck
 } from '../../utils/pieceMovement';
@@ -32,7 +32,7 @@ const setBoardEpic: Epic = (action$, state$: StateObservable<RootState>) => acti
     filter(isActionOf(setBoardAction)),
     mergeMap(() => of(
         calculatePossibleMovesAction(),
-        setActiveColorAction(state$.value.board.activeColor === Color.WHITE ? Color.BLACK : Color.WHITE)
+        setActiveColorAction(getOppositeColor(state$.value.board.activeColor))
     ))
 );
 
@@ -58,7 +58,7 @@ const updatePossibleMovesEpic: Epic = (action$, state$: StateObservable<RootStat
 
         for (const color of pieceColors) {
             for (const piece of pieces[color]) {
-                const opposingColor = piece.color === Color.WHITE ? Color.BLACK : Color.WHITE;
+                const opposingColor = getOppositeColor(piece.color);
 
                 const possibleMoves = calculatePossibleMoves(piece, board);
                 const validatedPossibleMoves = validateMovesForCheck(piece.position, possibleMoves, opposingColor, board);
