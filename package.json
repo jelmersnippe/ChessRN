@@ -1,33 +1,33 @@
 {
-  "name": "ChessRN",
-  "version": "0.0.1",
-  "private": true,
-  "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "start": "react-native start",
-    "lint": "eslint --ext .ts,.tsx ./src"
-  },
-  "dependencies": {
-    "react": "16.13.1",
-    "react-native": "0.63.4",
-    "react-redux": "^7.2.2",
-    "redux": "^4.0.5",
-    "redux-observable": "^1.2.0",
-    "rxjs": "^6.6.6",
-    "typesafe-actions": "^5.1.0"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.8.4",
-    "@babel/runtime": "^7.8.4",
-    "@react-native-community/eslint-config": "^1.1.0",
-    "@types/react": "^17.0.2",
-    "@types/react-native": "^0.63.2",
-    "@types/react-redux": "^7.1.16",
-    "@types/redux": "^3.6.0",
-    "eslint": "^7.21.0",
-    "metro-react-native-babel-preset": "^0.59.0",
-    "redux-devtools": "^3.7.0",
-    "typescript": "^4.2.3"
-  }
+    "name": "ChessRN",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "android": "react-native run-android",
+        "ios": "react-native run-ios",
+        "start": "react-native start",
+        "lint": "eslint --ext .ts,.tsx ./src"
+    },
+    "dependencies": {
+        "react": "16.13.1",
+        "react-native": "0.63.4",
+        "react-redux": "^7.2.2",
+        "redux": "^4.0.5",
+        "redux-observable": "^1.2.0",
+        "rxjs": "^6.6.6",
+        "redux-devtools-extension": "^2.13.9",
+        "typesafe-actions": "^5.1.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.8.4",
+        "@babel/runtime": "^7.8.4",
+        "@react-native-community/eslint-config": "^1.1.0",
+        "@types/react": "^17.0.2",
+        "@types/react-native": "^0.63.2",
+        "@types/react-redux": "^7.1.16",
+        "@types/redux": "^3.6.0",
+        "eslint": "^7.21.0",
+        "metro-react-native-babel-preset": "^0.59.0",
+        "typescript": "^4.2.3"
+    }
 }

@@ -50,8 +50,6 @@ const initialState: BoardState = {
 };
 
 const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialState, action: BoardActionTypes): BoardState => {
-    console.log(state);
-    console.log(action);
     switch (action.type) {
         case getType(setInitialStateAction):
             const gameState = fenToJson(action.payload);

@@ -296,7 +296,6 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
         const isChecked = store.getState().board.checks[piece.color];
         const availableCastles = store.getState().board.castlesAvailable[piece.color];
 
-        console.log(piece);
         if (!isChecked && !piece.hasMoved) {
             movementPossible[piece.position.rank][piece.position.file - 2].valid = availableCastles.queenSide && validateCastle(piece, 'queen', board);
             movementPossible[piece.position.rank][piece.position.file + 2].valid = availableCastles.kingSide && validateCastle(piece, 'king', board);
