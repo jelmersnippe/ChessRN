@@ -66,10 +66,20 @@ export const fenToJson = (fen: string) => {
     const board: BoardData = parseFenBoard(fenElements[0]);
     const pieces: { [key in Color]: Array<PieceData> } = createPiecesListFromBoard(board);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
-    const castlingPossibilities = parseFenCastlingPossibilities(fenElements[2]);
+    const castlingPossibilities: {
+        [Color.WHITE]: {
+            queenSide: boolean,
+            kingSide: boolean
+        },
+        [Color.BLACK]: {
+            queenSide: boolean,
+            kingSide: boolean
+        }
+    } = parseFenCastlingPossibilities(fenElements[2]);
 
     const halfMoveClock = parseInt(fenElements[4], 10);
-    const fullMoveNumber = parseInt(fenElements[6], 10);
+    const fullMoveNumber = parseInt(fenElements[5], 10);
+    console.log(fenElements);
 
     return {
         board,
@@ -151,29 +161,38 @@ const parseFenBoard = (fenBoard: string): BoardData => {
     return board;
 };
 
-const parseFenCastlingPossibilities = (fenCastlingPossibilities: string) => {
+const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): {
+    [Color.WHITE]: {
+        queenSide: boolean,
+        kingSide: boolean
+    },
+    [Color.BLACK]: {
+        queenSide: boolean,
+        kingSide: boolean
+    }
+} => {
     const castlingPossibilities = {
         [Color.WHITE]: {
-            king: false,
-            queen: false
+            kingSide: false,
+            queenSide: false
         },
         [Color.BLACK]: {
-            king: false,
-            queen: false
+            kingSide: false,
+            queenSide: false
         }
     };
 
     if (fenCastlingPossibilities.includes('K')) {
-        castlingPossibilities[Color.WHITE].king = true;
+        castlingPossibilities[Color.WHITE].kingSide = true;
     }
     if (fenCastlingPossibilities.includes('Q')) {
-        castlingPossibilities[Color.WHITE].queen = true;
+        castlingPossibilities[Color.WHITE].queenSide = true;
     }
     if (fenCastlingPossibilities.includes('k')) {
-        castlingPossibilities[Color.BLACK].king = true;
+        castlingPossibilities[Color.BLACK].kingSide = true;
     }
     if (fenCastlingPossibilities.includes('q')) {
-        castlingPossibilities[Color.BLACK].queen = true;
+        castlingPossibilities[Color.BLACK].queenSide = true;
     }
 
     return castlingPossibilities;

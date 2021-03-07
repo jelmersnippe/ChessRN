@@ -8,7 +8,7 @@ import {Color, RankData} from '../../constants/piece';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
 import {fenToJson} from '../../utils/fen';
-import {BoardActionTypes, setActiveColorAction, setBoardAction, setPiecesAction} from '../../reducers/board/actions';
+import {BoardActionTypes, setBoardAction, setInitialStateAction, setPiecesAction} from '../../reducers/board/actions';
 
 const Board: FunctionComponent = () => {
     const gameState = fenToJson('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
@@ -20,10 +20,17 @@ const Board: FunctionComponent = () => {
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
 
     useEffect(() => {
-        dispatch(setPiecesAction({pieces: gameState.pieces[Color.WHITE], color: Color.WHITE}));
-        dispatch(setPiecesAction({pieces: gameState.pieces[Color.BLACK], color: Color.BLACK}));
-        dispatch(setBoardAction(gameState.board));
-        dispatch(setActiveColorAction(gameState.activeColor));
+        dispatch(setInitialStateAction({
+            board: gameState.board,
+            pieces: gameState.pieces,
+            activeColor: gameState.activeColor,
+            castlesAvailable: gameState.castlingPossibilities,
+            checks: {
+                [Color.WHITE]: false,
+                [Color.BLACK]: false
+            },
+            turns: gameState.fullMoveNumber
+        }));
     }, []);
 
     const renderRanks = (): Array<JSX.Element> => {

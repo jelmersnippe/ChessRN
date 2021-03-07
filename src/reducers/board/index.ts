@@ -1,6 +1,14 @@
 import {BoardData, Color} from '../../constants/piece';
 import {getType, Reducer} from 'typesafe-actions';
-import {BoardActionTypes, setActiveColorAction, setBoardAction, setChecksAction, setPiecesAction} from './actions';
+import {
+    BoardActionTypes,
+    increaseTurnsAction,
+    setActiveColorAction,
+    setBoardAction,
+    setChecksAction,
+    setInitialStateAction,
+    setPiecesAction
+} from './actions';
 import PieceData, {Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
 
@@ -16,6 +24,7 @@ export interface BoardState {
     };
     enPassant?: Position;
     checks: { [key in Color]: CheckedState | false };
+    turns: number;
 }
 
 
@@ -39,12 +48,19 @@ const initialState: BoardState = {
     checks: {
         [Color.WHITE]: false,
         [Color.BLACK]: false
-    }
+    },
+    turns: 1
 };
 
 const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialState, action: BoardActionTypes): BoardState => {
+    console.log(state);
     console.log(action);
     switch (action.type) {
+        case getType(setInitialStateAction):
+            return {
+                ...state,
+                ...action.payload
+            };
         case getType(setActiveColorAction):
             return {
                 ...state,
@@ -70,6 +86,11 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
                     ...state.checks,
                     ...action.payload
                 }
+            };
+        case getType(increaseTurnsAction):
+            return {
+                ...state,
+                turns: state.turns + 1
             };
         default:
             return state;
