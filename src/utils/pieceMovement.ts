@@ -27,7 +27,7 @@ export const validateMovesForCheck = (currentPosition: Position, possibleMoves: 
             const selectedPiece = tempBoard[currentPosition.rank][currentPosition.file];
 
             if (!selectedPiece) {
-                throw new Error('Trying to valid an invalid position');
+                throw new Error('Trying to validate an invalid position');
             }
 
             // Set new position for selected piece

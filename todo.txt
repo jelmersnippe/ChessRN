@@ -1,6 +1,8 @@
-- Move piece movement & capturing to epics
-- Turn the board state back into a fen string
+- Move piece capturing to epics
+- Implement En Passant
 
 - Clean up the Diagonal and Orthogonal movement scripts
-- Implement En Passant
+- Clean up epics -> move large logic blocks to external functions
+- Add move history
 - Re-add animated movement
+- Turn the board state back into a fen string

@@ -1,7 +1,7 @@
 import {combineEpics, Epic, StateObservable} from 'redux-observable';
 import {
     calculatePossibleMovesAction,
-    checkCastlingAvailabilityAction,
+    checkCastlingAvailabilityAction, commitMovementAction,
     increaseTurnsAction,
     setActiveColorAction,
     setBoardAction,
@@ -23,7 +23,7 @@ import {
 } from '../../utils/pieceMovement';
 import {RootState} from '../../config/store';
 import {isActionOf} from 'typesafe-actions';
-import {Color} from '../../constants/piece';
+import {Color, PieceType} from '../../constants/piece';
 import {of} from 'rxjs';
 import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
 import {CastlingAvailability} from './index';
@@ -134,13 +134,62 @@ const checkCastlingAvailabilityEpic: Epic = (action$, state$: StateObservable<Ro
     })
 );
 
+const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
+    filter(isActionOf(commitMovementAction)),
+    filter(() => state$.value.board.board !== null),
+    filter((action) => action.payload.piece.possibleMoves[action.payload.position.rank][action.payload.position.file].valid),
+    map((action) => {
+        const {board} = state$.value.board;
+        const {piece, position} = action.payload;
+
+        if (!board) {
+            throw new Error('No board');
+        }
+
+        const updatedBoard = createDuplicateBoard(board);
+
+        const oldPosition = {rank: piece.position.rank, file: piece.position.file};
+        updatedBoard[piece.position.rank][piece.position.file] = null;
+        updatedBoard[position.rank][position.file] = piece;
+
+        // TODO: Add animated movement back into Piece display
+        //         Animated.timing(this.displayPosition, {
+        //             toValue: {x: position.x * theme.TILE_SIZE, y: position.y * theme.TILE_SIZE},
+        //             duration: 150,
+        //             useNativeDriver: true
+        //         }).start();
+        piece.hasMoved = true;
+        piece.position = {rank: position.rank, file: position.file};
+
+        // Castle move
+        if (piece.type === PieceType.KING && Math.abs(oldPosition.file - position.file) > 1) {
+            const currentRookFile = position.file < 4 ? 0 : 7;
+            const rook = updatedBoard[position.rank][currentRookFile];
+
+            if (!rook) {
+                return;
+            }
+
+            const newRookFile = position.file < 4 ? position.file + 1 : position.file - 1;
+
+            updatedBoard[position.rank][currentRookFile] = null;
+            updatedBoard[position.rank][newRookFile] = rook;
+            rook.hasMoved = true;
+            rook.position = {rank: position.rank, file: newRookFile};
+        }
+
+        return setBoardAction([...updatedBoard]);
+    })
+);
+
 const boardEpic: Epic = combineEpics(
     setInitialStateEpic,
     setBoardEpic,
     increaseTurnsEpic,
     updatePossibleMovesEpic,
     validateChecksEpic,
-    checkCastlingAvailabilityEpic
+    checkCastlingAvailabilityEpic,
+    commitMovementEpic
 );
 
 export default boardEpic;

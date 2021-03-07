@@ -4,11 +4,11 @@ import styles from './styles';
 import theme from '../../config/theme';
 import Piece from '../Piece';
 import {PieceData} from '../Piece/PieceData';
-import {Color, PieceType, RankData} from '../../constants/piece';
+import {Color, RankData} from '../../constants/piece';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
-import {BoardActionTypes, setBoardAction, setInitialStateAction, setPiecesAction} from '../../reducers/board/actions';
-import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
+import {BoardActionTypes, commitMovementAction, setInitialStateAction, setPiecesAction} from '../../reducers/board/actions';
+import {createPiecesListFromBoard} from '../../utils/fen';
 
 const Board: FunctionComponent = () => {
     const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -84,47 +84,6 @@ const Board: FunctionComponent = () => {
         return squares;
     };
 
-    const commitMovement = (rank: number, file: number) => {
-        if (!selectedPiece || !board) {
-            return;
-        }
-
-        const updatedBoard = createDuplicateBoard(board);
-
-        const oldPosition = {rank: selectedPiece.position.rank, file: selectedPiece.position.file};
-        updatedBoard[selectedPiece.position.rank][selectedPiece.position.file] = null;
-        updatedBoard[rank][file] = selectedPiece;
-
-        // TODO: Add animated movement back into Piece display
-        //         Animated.timing(this.displayPosition, {
-        //             toValue: {x: position.x * theme.TILE_SIZE, y: position.y * theme.TILE_SIZE},
-        //             duration: 150,
-        //             useNativeDriver: true
-        //         }).start();
-        selectedPiece.hasMoved = true;
-        selectedPiece.position = {rank, file};
-
-        // Castle move
-        if (selectedPiece.type === PieceType.KING && Math.abs(oldPosition.file - file) > 1) {
-            const currentRookFile = file < 4 ? 0 : 7;
-            const rook = updatedBoard[rank][currentRookFile];
-
-            if (!rook) {
-                return;
-            }
-
-            const newRookFile = file < 4 ? file + 1 : file - 1;
-
-            updatedBoard[rank][currentRookFile] = null;
-            updatedBoard[rank][newRookFile] = rook;
-            rook.hasMoved = true;
-            rook.position = {rank: rank, file: newRookFile};
-        }
-
-        dispatch(setBoardAction([...updatedBoard]));
-        setSelectedPiece(null);
-    };
-
     const renderPieces = () => {
         if (!board) {
             return;
@@ -144,6 +103,16 @@ const Board: FunctionComponent = () => {
                 />);
             })
         );
+    };
+
+    const commitMovement = (rank: number, file: number) => {
+        if (!selectedPiece || !board) {
+            return;
+        }
+
+        dispatch(commitMovementAction({piece: selectedPiece, position: {rank, file}}));
+
+        setSelectedPiece(null);
     };
 
     const handleCapture = (pieceToCapture: PieceData) => {
