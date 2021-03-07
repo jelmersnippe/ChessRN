@@ -55,6 +55,10 @@ export const setCastlingAvailabilityAction = createAction(
     'SET_CASTLING_AVAILABILITY'
 )<CastlingAvailability>();
 
+export const setEnPassantAction = createAction(
+    'SET_EN_PASSANT'
+)<Position>();
+
 export type BoardActionTypes =
     ActionType<typeof setActiveColorAction> |
     ActionType<typeof setBoardAction> |
@@ -67,4 +71,5 @@ export type BoardActionTypes =
     ActionType<typeof commitMovementAction> |
     ActionType<typeof handleCaptureAction> |
     ActionType<typeof checkCastlingAvailabilityAction> |
-    ActionType<typeof setCastlingAvailabilityAction>
+    ActionType<typeof setCastlingAvailabilityAction> |
+    ActionType<typeof setEnPassantAction>

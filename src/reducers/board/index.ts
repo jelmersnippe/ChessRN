@@ -5,7 +5,7 @@ import {
     increaseTurnsAction,
     setActiveColorAction,
     setBoardAction, setCastlingAvailabilityAction,
-    setChecksAction,
+    setChecksAction, setEnPassantAction,
     setInitialStateAction,
     setPossibleMovesAction
 } from './actions';
@@ -97,6 +97,11 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
             return {
                 ...state,
                 castlesAvailable: action.payload
+            };
+        case getType(setEnPassantAction):
+            return {
+                ...state,
+                enPassant: action.payload
             };
         default:
             return state;

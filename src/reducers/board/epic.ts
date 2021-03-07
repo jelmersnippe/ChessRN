@@ -1,12 +1,14 @@
 import {combineEpics, Epic, StateObservable} from 'redux-observable';
 import {
     calculatePossibleMovesAction,
-    checkCastlingAvailabilityAction, commitMovementAction,
+    checkCastlingAvailabilityAction,
+    commitMovementAction,
     increaseTurnsAction,
     setActiveColorAction,
     setBoardAction,
     setCastlingAvailabilityAction,
     setChecksAction,
+    setEnPassantAction,
     setInitialStateAction,
     setPossibleMovesAction
 } from './actions';
@@ -14,7 +16,8 @@ import {filter, map, mapTo, mergeMap} from 'rxjs/operators';
 import {
     anyCastlesAvailable,
     calculatePossibleMoves,
-    canCaptureKing, getCastlingAvailability,
+    canCaptureKing,
+    getCastlingAvailability,
     getCheckedStatus,
     getMovesLeft,
     getOppositeColor,
@@ -138,7 +141,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
     filter(isActionOf(commitMovementAction)),
     filter(() => state$.value.board.board !== null),
     filter((action) => action.payload.piece.possibleMoves[action.payload.position.rank][action.payload.position.file].valid),
-    map((action) => {
+    mergeMap((action) => {
         const {board} = state$.value.board;
         const {piece, position} = action.payload;
 
@@ -161,7 +164,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
             const rook = updatedBoard[position.rank][currentRookFile];
 
             if (!rook) {
-                return;
+                throw new Error('Tried to castle without a rook');
             }
 
             const newRookFile = position.file < 4 ? position.file + 1 : position.file - 1;
@@ -172,7 +175,10 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
             rook.position = {rank: position.rank, file: newRookFile};
         }
 
-        return setBoardAction([...updatedBoard]);
+        return of(
+            setBoardAction([...updatedBoard]),
+            setEnPassantAction(action.payload.position)
+        );
     })
 );
 
