@@ -289,11 +289,6 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
                 continue;
             }
 
-            // if (!piece.hasMoved) {
-            //     validateQueenSideCastle();
-            //     validateKingSideCastle();
-            // }
-
             // Own square
             if (file === piece.position.file && rank === piece.position.rank) {
                 continue;
@@ -343,7 +338,6 @@ const pawnMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
             break;
         }
 
-        // TODO: Fix unmoved pawns being able to hop over pieces in front of them
         movementPossible[rankToCheck][piece.position.file] = checkSquare({rank: rankToCheck, file: piece.position.file}, piece.color, board);
 
         /* TODO: En passant

@@ -50,6 +50,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
 import {BoardData, Color, PieceType, RankData} from '../constants/piece';
 import {PieceData} from '../components/Piece/PieceData';
+import {CastlesAvailable} from '../reducers/board';
 
 const fenPieces = {
     p: 'Pawn',
@@ -64,25 +65,14 @@ export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
     const board: BoardData = parseFenBoard(fenElements[0]);
-    // const pieces: { [key in Color]: Array<PieceData> } = createPiecesListFromBoard(board);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
-    const castlingPossibilities: {
-        [Color.WHITE]: {
-            queenSide: boolean,
-            kingSide: boolean
-        },
-        [Color.BLACK]: {
-            queenSide: boolean,
-            kingSide: boolean
-        }
-    } = parseFenCastlingPossibilities(fenElements[2]);
+    const castlingPossibilities: CastlesAvailable = parseFenCastlingPossibilities(fenElements[2]);
 
     const halfMoveClock = parseInt(fenElements[4], 10);
     const fullMoveNumber = parseInt(fenElements[5], 10);
 
     return {
         board,
-        // pieces,
         activeColor,
         castlingPossibilities,
         halfMoveClock,
@@ -172,39 +162,15 @@ const parseFenBoard = (fenBoard: string): BoardData => {
     return board;
 };
 
-const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): {
-    [Color.WHITE]: {
-        queenSide: boolean,
-        kingSide: boolean
-    },
-    [Color.BLACK]: {
-        queenSide: boolean,
-        kingSide: boolean
-    }
-} => {
-    const castlingPossibilities = {
+const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): CastlesAvailable => {
+    return {
         [Color.WHITE]: {
-            kingSide: false,
-            queenSide: false
+            kingSide: fenCastlingPossibilities.includes('K'),
+            queenSide: fenCastlingPossibilities.includes('Q')
         },
         [Color.BLACK]: {
-            kingSide: false,
-            queenSide: false
+            kingSide: fenCastlingPossibilities.includes('k'),
+            queenSide: fenCastlingPossibilities.includes('q')
         }
     };
-
-    if (fenCastlingPossibilities.includes('K')) {
-        castlingPossibilities[Color.WHITE].kingSide = true;
-    }
-    if (fenCastlingPossibilities.includes('Q')) {
-        castlingPossibilities[Color.WHITE].queenSide = true;
-    }
-    if (fenCastlingPossibilities.includes('k')) {
-        castlingPossibilities[Color.BLACK].kingSide = true;
-    }
-    if (fenCastlingPossibilities.includes('q')) {
-        castlingPossibilities[Color.BLACK].queenSide = true;
-    }
-
-    return castlingPossibilities;
 };

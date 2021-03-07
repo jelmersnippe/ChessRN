@@ -6,34 +6,31 @@ import {
     setActiveColorAction,
     setBoardAction,
     setChecksAction,
-    setInitialStateAction, setPossibleMovesAction
+    setInitialStateAction,
+    setPossibleMovesAction
 } from './actions';
 import {Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
 import {fenToJson} from '../../utils/fen';
 
+export type CastlesAvailable = {
+    [key in Color]: {
+        queenSide: boolean;
+        kingSide: boolean;
+    }
+}
+
 export interface BoardState {
     board: BoardData | null;
-    // pieces: { [key in Color]: Array<PieceData> };
     activeColor: Color;
-    castlesAvailable: {
-        [key in Color]: {
-            queenSide: boolean;
-            kingSide: boolean;
-        }
-    };
+    castlesAvailable: CastlesAvailable;
     enPassant?: Position;
     checks: { [key in Color]: CheckedState | false };
     turns: number;
 }
 
-
 const initialState: BoardState = {
     board: null,
-    // pieces: {
-    //     [Color.WHITE]: [],
-    //     [Color.BLACK]: []
-    // },
     activeColor: Color.WHITE,
     castlesAvailable: {
         [Color.WHITE]: {
@@ -59,9 +56,8 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
         case getType(setInitialStateAction):
             const gameState = fenToJson(action.payload);
 
-            const newState =  {
+            const newState = {
                 board: gameState.board,
-                // pieces: gameState.pieces,
                 activeColor: gameState.activeColor,
                 castlesAvailable: gameState.castlingPossibilities,
                 turns: gameState.fullMoveNumber
@@ -81,14 +77,6 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
                 ...state,
                 board: action.payload
             };
-        // case getType(setPiecesAction):
-        //     return {
-        //         ...state,
-        //         pieces: {
-        //             ...state.pieces,
-        //             [action.payload.color]: action.payload.pieces
-        //         }
-        //     };
         case getType(setPossibleMovesAction):
             return {
                 ...state,
