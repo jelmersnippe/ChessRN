@@ -3,37 +3,33 @@ import {Text, TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import theme from '../../config/theme';
 import Piece from '../Piece';
-import PieceData from '../Piece/PieceData';
+import {PieceData} from '../Piece/PieceData';
 import {Color, RankData} from '../../constants/piece';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
-import {fenToJson} from '../../utils/fen';
 import {BoardActionTypes, setBoardAction, setInitialStateAction, setPiecesAction} from '../../reducers/board/actions';
+import {createPiecesListFromBoard} from '../../utils/fen';
 
 const Board: FunctionComponent = () => {
-    const gameState = fenToJson('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     // const gameState = fenToJson('rnbqkbnr/1ppQ1pp1/7p/pB2p3/4P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1');
 
-    const {board, pieces, activeColor, checks} = useSelector((state: RootState) => state.board);
+    const {board, activeColor, checks} = useSelector((state: RootState) => state.board);
     const dispatch = useDispatch<Dispatch<BoardActionTypes>>();
 
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
 
     useEffect(() => {
-        dispatch(setInitialStateAction({
-            board: gameState.board,
-            pieces: gameState.pieces,
-            activeColor: gameState.activeColor,
-            castlesAvailable: gameState.castlingPossibilities,
-            checks: {
-                [Color.WHITE]: false,
-                [Color.BLACK]: false
-            },
-            turns: gameState.fullMoveNumber
-        }));
-    }, []);
+        if (!board) {
+            dispatch(setInitialStateAction(fenString));
+        }
+    }, [board]);
 
-    const renderRanks = (): Array<JSX.Element> => {
+    const renderRanks = (): JSX.Element => {
+        if (!board) {
+            return <View/>;
+        }
+
         const ranks: Array<JSX.Element> = [];
 
         for (let i = 0; i < board.length; i++) {
@@ -44,7 +40,11 @@ const Board: FunctionComponent = () => {
             );
         }
 
-        return ranks;
+        return (
+            <>
+                {ranks}
+            </>
+        );
     };
 
     const renderSquares = (rankIndex: number, rank: RankData): Array<JSX.Element> => {
@@ -55,8 +55,8 @@ const Board: FunctionComponent = () => {
             let disabled = true;
 
             if (selectedPiece) {
-                const isPossibleMove = selectedPiece.possibleMoves?.[rankIndex][fileIndex];
-                const isSelectedPiece = selectedPiece.boardPosition.x === fileIndex && selectedPiece?.boardPosition.y === rankIndex;
+                const isPossibleMove = selectedPiece.possibleMoves?.[rankIndex][fileIndex].valid;
+                const isSelectedPiece = selectedPiece.position.file === fileIndex && selectedPiece.position.rank === rankIndex;
 
                 if (isPossibleMove) {
                     backgroundColor = 'sandybrown';
@@ -65,7 +65,7 @@ const Board: FunctionComponent = () => {
                     backgroundColor = 'wheat';
                 }
 
-                disabled = !isPossibleMove && !isSelectedPiece;
+                disabled = !isPossibleMove || isSelectedPiece;
             }
 
             squares.push(
@@ -85,22 +85,34 @@ const Board: FunctionComponent = () => {
     };
 
     const commitMovement = (rank: number, file: number) => {
-        if (!selectedPiece) {
+        if (!selectedPiece || !board) {
             return;
         }
 
         const updatedBoard = board;
 
-        updatedBoard[selectedPiece.boardPosition.y][selectedPiece.boardPosition.x] = null;
+        updatedBoard[selectedPiece.position.rank][selectedPiece.position.file] = null;
         updatedBoard[rank][file] = selectedPiece;
 
-        selectedPiece.updatePosition({x: file, y: rank});
+        // TODO: Add animated movement back into Piece display
+        //         Animated.timing(this.displayPosition, {
+        //             toValue: {x: position.x * theme.TILE_SIZE, y: position.y * theme.TILE_SIZE},
+        //             duration: 150,
+        //             useNativeDriver: true
+        //         }).start();
+        selectedPiece.hasMoved = true;
+        selectedPiece.position = {rank, file};
 
         dispatch(setBoardAction([...board]));
         setSelectedPiece(null);
     };
 
     const renderPieces = () => {
+        if (!board) {
+            return;
+        }
+
+        const pieces = createPiecesListFromBoard(board);
         const keys = Object.keys(pieces) as Array<Color>;
         return keys.map((key) =>
             pieces[key].map((piece, index) => {
@@ -109,7 +121,7 @@ const Board: FunctionComponent = () => {
                     piece={piece}
                     interactable={piece.color === activeColor}
                     selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
-                    capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.boardPosition.y][piece.boardPosition.x]}
+                    capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.position.rank][piece.position.file].valid}
                     captureAction={(pieceToCapture) => handleCapture(pieceToCapture)}
                 />);
             })
@@ -117,17 +129,18 @@ const Board: FunctionComponent = () => {
     };
 
     const handleCapture = (pieceToCapture: PieceData) => {
-        if (!selectedPiece) {
+        if (!selectedPiece || !board) {
             return;
         }
-
-        board[pieceToCapture.boardPosition.y][pieceToCapture.boardPosition.x] = null;
-        const filteredPieces = pieces[pieceToCapture.color].filter((piece) => piece?.boardPosition !== pieceToCapture?.boardPosition);
+        const pieces = createPiecesListFromBoard(board);
+        board[pieceToCapture.position.rank][pieceToCapture.position.file] = null;
+        const filteredPieces = pieces[pieceToCapture.color].filter((piece) => piece?.position !== pieceToCapture?.position);
         dispatch(setPiecesAction({
             pieces: filteredPieces,
             color: pieceToCapture.color
         }));
-        commitMovement(pieceToCapture.boardPosition.y, pieceToCapture.boardPosition.x);
+
+        commitMovement(pieceToCapture.position.rank, pieceToCapture.position.file);
     };
 
     return (

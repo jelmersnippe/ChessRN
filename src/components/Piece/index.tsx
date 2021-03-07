@@ -3,6 +3,7 @@ import {Animated, Image, TouchableOpacity} from 'react-native';
 import styles from './styles';
 import {Props} from './Props';
 import {pieceImages} from '../../constants/piece';
+import theme from '../../config/theme';
 
 const Piece: FunctionComponent<Props> = ({piece, interactable, selectAction, capturable, captureAction}) => {
 
@@ -13,8 +14,8 @@ const Piece: FunctionComponent<Props> = ({piece, interactable, selectAction, cap
                 borderColor: piece.checksKing ? 'tomato' : 'transparent',
                 borderWidth: 4,
                 transform: [
-                    {translateX: piece.displayPosition.x},
-                    {translateY: piece.displayPosition.y}
+                    {translateX: piece.position.file * theme.TILE_SIZE},
+                    {translateY: piece.position.rank * theme.TILE_SIZE}
                 ]
             }}
         >

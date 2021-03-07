@@ -1,0 +1,11 @@
+- Turn board & pieces in state into regular objects
+- Move the Movement handling to epics
+- Dont set pieces directly. When a movement action is made, update the board and use the previous pieces state combined with the move to update
+- Turn the board state back into a fen string
+- Add function to get opposite color (to remove all the Color terniaries)
+- Create CastlingPossibilties interface and simplify parseFenCastlingPossibilities
+
+- Clean up the Diagonal and Orthogonal movement scripts
+- Fix the pawn double move being able to leap over other pieces
+- Implement En Passant
+- Implement castling

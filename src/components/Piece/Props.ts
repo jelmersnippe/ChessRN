@@ -1,4 +1,4 @@
-import PieceData from './PieceData';
+import {PieceData} from './PieceData';
 
 export interface Props {
     piece: PieceData;

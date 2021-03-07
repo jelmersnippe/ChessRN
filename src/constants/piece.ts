@@ -1,4 +1,4 @@
-import PieceData from '../components/Piece/PieceData';
+import {PieceData} from '../components/Piece/PieceData';
 
 export type BoardData = Array<RankData>;
 

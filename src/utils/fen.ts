@@ -49,7 +49,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
  */
 
 import {BoardData, Color, PieceType, RankData} from '../constants/piece';
-import PieceData from '../components/Piece/PieceData';
+import {PieceData} from '../components/Piece/PieceData';
 
 const fenPieces = {
     p: 'Pawn',
@@ -64,7 +64,7 @@ export const fenToJson = (fen: string) => {
     const fenElements = fen.split(' ');
 
     const board: BoardData = parseFenBoard(fenElements[0]);
-    const pieces: { [key in Color]: Array<PieceData> } = createPiecesListFromBoard(board);
+    // const pieces: { [key in Color]: Array<PieceData> } = createPiecesListFromBoard(board);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
     const castlingPossibilities: {
         [Color.WHITE]: {
@@ -79,11 +79,10 @@ export const fenToJson = (fen: string) => {
 
     const halfMoveClock = parseInt(fenElements[4], 10);
     const fullMoveNumber = parseInt(fenElements[5], 10);
-    console.log(fenElements);
 
     return {
         board,
-        pieces,
+        // pieces,
         activeColor,
         castlingPossibilities,
         halfMoveClock,
@@ -104,7 +103,16 @@ export const createPiecesListFromBoard = (board: BoardData): { [key in Color]: A
 
 export const createDuplicateBoard = (board: BoardData): BoardData => {
     return board.map((rank) =>
-        rank.map((file) => file ? new PieceData(file.color, file.type, file.boardPosition) : null)
+        rank.map((file) => {
+            return file ?
+                {
+                    color: file.color,
+                    type: file.type,
+                    position: file.position,
+                    possibleMoves: file.possibleMoves
+                }
+                : null;
+        })
     );
 };
 
@@ -134,28 +142,31 @@ const parseFenBoard = (fenBoard: string): BoardData => {
 
     const fenRanks = fenBoard.split('/');
 
-    let currentRank = 0;
-    for (const fenRank of fenRanks) {
+    for (let currentRank = 0; currentRank < fenRanks.length; currentRank++) {
+        const fenRank = fenRanks[currentRank];
         const rank: RankData = [];
 
         let currentFile = 0;
-        for (const file of fenRank) {
-            if (file.toLowerCase() in fenPieces) {
-                rank.push(new PieceData(pieceToColor(file), pieceToType(file), {x: currentFile, y: currentRank}));
+        for (const fenFile of fenRank) {
+            if (fenFile.toLowerCase() in fenPieces) {
+                rank.push({
+                    color: pieceToColor(fenFile),
+                    type: pieceToType(fenFile),
+                    possibleMoves: [],
+                    position: {rank: currentRank, file: currentFile}
+                });
                 currentFile++;
             } else {
-                let filesToSkip = parseInt(file, 10);
+                let filesToSkip = parseInt(fenFile, 10);
                 while (filesToSkip > 0) {
                     rank.push(null);
                     filesToSkip--;
                     currentFile++;
                 }
             }
-
         }
 
         board.push(rank);
-        currentRank++;
     }
 
     return board;
