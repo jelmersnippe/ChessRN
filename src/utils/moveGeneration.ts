@@ -1,7 +1,7 @@
 import {PieceData, Position} from '../components/Piece/PieceData';
 import {BoardState} from '../reducers/board';
-import {createPiecesListFromBoard} from './fen';
-import {calculatePossibleMoves, getOppositeColor} from './pieceMovement';
+import {createPiecesListFromBoard, getOppositeColor} from './fen';
+import {calculatePossibleMoves} from './pieceMovement';
 import {Color, PieceType} from '../constants/piece';
 import isEqual from 'lodash.isequal';
 

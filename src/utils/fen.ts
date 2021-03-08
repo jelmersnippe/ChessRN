@@ -137,7 +137,6 @@ const parseFenBoard = (fenBoard: string): BoardData => {
                 rank.push({
                     color: pieceToColor(fenFile),
                     type: pieceToType(fenFile),
-                    possibleMoves: [],
                     position: {rank: currentRank, file: currentFile}
                 });
                 currentFile++;
@@ -169,3 +168,5 @@ const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): Castli
         }
     };
 };
+
+export const getOppositeColor = (color: Color) => color === Color.WHITE ? Color.BLACK : Color.WHITE;

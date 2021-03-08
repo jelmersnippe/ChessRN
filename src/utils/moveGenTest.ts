@@ -4,7 +4,7 @@
 
 import {BoardState} from '../reducers/board';
 import {generateLegalMoves, makeMove, undoMove} from './moveGeneration';
-import {getOppositeColor} from './pieceMovement';
+import {getOppositeColor} from './fen';
 import cloneDeep from 'lodash.clonedeep';
 
 export const Perft = (gameState: BoardState, depth: number): number => {

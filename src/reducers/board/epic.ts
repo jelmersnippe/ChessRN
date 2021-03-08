@@ -13,7 +13,7 @@ import {
     setPossibleMovesAction
 } from './actions';
 import {filter, map, mergeMap} from 'rxjs/operators';
-import {anyCastlesAvailable, getCastlingAvailability, getCheckedStatus, getOppositeColor, isChecked} from '../../utils/pieceMovement';
+import {getOppositeColor} from '../../utils/fen';
 import {RootState} from '../../config/store';
 import {isActionOf} from 'typesafe-actions';
 import {Color, PieceType} from '../../constants/piece';
@@ -22,6 +22,7 @@ import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
 import {CastlingAvailability} from './index';
 import {generateLegalMoves} from '../../utils/moveGeneration';
 import isEqual from 'lodash.isequal';
+import {anyCastlesAvailable, getCastlingAvailability, getCheckedStatus, isChecked} from '../../utils/movementValidation';
 
 const setInitialStateEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(setInitialStateAction)),
