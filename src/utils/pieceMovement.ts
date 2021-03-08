@@ -63,13 +63,13 @@ export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPas
         case PieceType.KING:
             return kingMovement(piece, board);
         case PieceType.QUEEN:
-            return slidingMovement(piece, board, (rankDelta, fileDelta) => rankDelta === 0 && fileDelta === 0);
+            return slidingMovement(piece, board, (rankDelta, fileDelta) => !(rankDelta === 0 && fileDelta === 0));
         case PieceType.KNIGHT:
             return knightMovement(piece, board);
         case PieceType.ROOK:
-            return slidingMovement(piece, board, (rankDelta, fileDelta) => Math.abs(rankDelta) === Math.abs(fileDelta));
+            return slidingMovement(piece, board, (rankDelta, fileDelta) => Math.abs(rankDelta) !== Math.abs(fileDelta));
         case PieceType.BISHOP:
-            return slidingMovement(piece, board, (rankDelta, fileDelta) => rankDelta === 0 || fileDelta === 0);
+            return slidingMovement(piece, board, (rankDelta, fileDelta) => rankDelta !== 0 && fileDelta !== 0);
         case PieceType.PAWN:
             return pawnMovement(piece, board, enPassant);
     }
@@ -97,12 +97,15 @@ const generateFalseMovementObject = (board: BoardData) => {
 const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta: number, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    // If the square is inside the board
-    while (piece.position.rank + rankDelta >= 0 && piece.position.rank + rankDelta < 8 &&
-    piece.position.file + fileDelta >= 0 && piece.position.file + fileDelta < 8) {
+    let currentRankDistance = rankDelta;
+    let currentFileDistance = fileDelta;
 
-        const rankToCheck = piece.position.rank + rankDelta;
-        const fileToCheck = piece.position.file + fileDelta;
+    // If the square is inside the board
+    while (piece.position.rank + currentRankDistance >= 0 && piece.position.rank + currentRankDistance < 8 &&
+    piece.position.file + currentFileDistance >= 0 && piece.position.file + currentFileDistance < 8) {
+
+        const rankToCheck = piece.position.rank + currentRankDistance;
+        const fileToCheck = piece.position.file + currentFileDistance;
         const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
         movementPossible[rankToCheck][fileToCheck] = move;
 
@@ -110,8 +113,8 @@ const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta:
             break;
         }
 
-        rankDelta += rankDelta;
-        fileDelta += fileDelta;
+        currentRankDistance += rankDelta;
+        currentFileDistance += fileDelta;
     }
 
     return movementPossible;
@@ -125,13 +128,14 @@ const slidingMovement = (piece: PieceData, board: BoardData, isValidSquare: (ran
             if (!isValidSquare(rankDelta, fileDelta)) {
                 continue;
             }
+            console.log('valid square');
 
             // Merge just found moves with the already known possible moves
             const partialMovesPossible = moveUntilCaptureOrBlock(piece, rankDelta, fileDelta, board);
             possibleMoves = partialMovesPossible.map((rank, rankIndex) =>
                 rank.map((file, fileIndex) => ({
-                    valid: file.valid || partialMovesPossible[rankIndex][fileIndex].valid,
-                    capture: file.capture || partialMovesPossible[rankIndex][fileIndex].capture
+                    valid: file.valid || possibleMoves[rankIndex][fileIndex].valid,
+                    capture: file.capture || possibleMoves[rankIndex][fileIndex].capture
                 }))
             );
         }
@@ -205,7 +209,7 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
         const isChecked = store.getState().board.checks[piece.color];
         const availableCastles = store.getState().board.castlesAvailable[piece.color];
 
-        if (!isChecked && !piece.hasMoved) {
+        if (!isChecked && !piece.hasMoved && (availableCastles.kingSide || availableCastles.queenSide)) {
             movementPossible[piece.position.rank][piece.position.file - 2].valid = availableCastles.queenSide && validateCastle(piece, 'queen', board);
             movementPossible[piece.position.rank][piece.position.file + 2].valid = availableCastles.kingSide && validateCastle(piece, 'king', board);
         }

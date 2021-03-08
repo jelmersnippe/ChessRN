@@ -1,8 +1,6 @@
-- Implement En Passant capturing
 - Implement pawn promotion
 
 - Clean up possible move calculation -> pass in full state & simplify switches
-- Clean up the Diagonal and Orthogonal movement scripts
 - Clean up epics -> move large logic blocks to external functions
 - Add move history
 - Re-add animated movement

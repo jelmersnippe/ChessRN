@@ -159,6 +159,9 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
         piece.hasMoved = true;
         piece.position = {rank: position.rank, file: position.file};
 
+        // TODO: These have to be taken into account when calculating movement
+        // Currently you can capture a pawn in En Passant and put your own king in check, which is illegal
+
         // Castle move
         if (piece.type === PieceType.KING && Math.abs(oldPosition.file - position.file) > 1) {
             const currentRookFile = position.file < 4 ? 0 : 7;

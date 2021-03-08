@@ -12,6 +12,7 @@ import {createPiecesListFromBoard} from '../../utils/fen';
 
 const Board: FunctionComponent = () => {
     const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    // const fenString = '1k6/8/8/2Q2K2/8/8/8/8 w - - 0 1';
     // const gameState = fenToJson('rnbqkbnr/1ppQ1pp1/7p/pB2p3/4P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1');
 
     const {board, activeColor, checks} = useSelector((state: RootState) => state.board);
