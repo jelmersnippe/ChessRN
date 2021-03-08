@@ -29,45 +29,27 @@ export const Perft = (gameState: BoardState, depth: number): number => {
 
     return possibleMoves;
 };
-
-// import {createDuplicateBoard, createPiecesListFromBoard, fenToJson} from './fen';
-// import {Color} from '../constants/piece';
-// import {canCaptureKing, generateLegalMoves, generatePseudoLegalMoves, getOppositeColor} from './pieceMovement';
 //
-//
-// const gameState = fenToJson(fenString);
-//
-// export const Perft = (, depth: number) => {
-//
-//     if (depth === 0) {
-//         return 0;
+// const perftResult = Perft({
+//         board: fenToJson(fenString).board,
+//         possibleMoves: [],
+//         activeColor: Color.WHITE,
+//         castlesAvailable: {
+//             [Color.WHITE]: {
+//                 queenSide: true,
+//                 kingSide: true
+//             },
+//             [Color.BLACK]: {
+//                 queenSide: true,
+//                 kingSide: true
+//             }
+//         },
+//         checks: {
+//             [Color.WHITE]: false,
+//             [Color.BLACK]: false
+//         },
+//         turns: 1
 //     }
+//     , 2);
 //
-//     let possibleMoves = 0;
-//
-//     const pieces = createPiecesListFromBoard(gameState.board);
-//     const updatedBoard = createDuplicateBoard(gameState.board);
-//     const pieceColors = Object.keys(pieces) as Array<Color>;
-//
-//     for (const color of pieceColors) {
-//         for (const piece of pieces[color]) {
-//             const opposingColor = getOppositeColor(piece.color);
-//
-//             // TODO: Pass the state to these instead of passing everything seperately
-//             const pseudoLegalMoves = generatePseudoLegalMoves(piece, gameState.board, undefined);
-//             const legalMoves = generateLegalMoves(piece.position, pseudoLegalMoves, opposingColor, gameState.board, undefined);
-//
-//             const checksKing = canCaptureKing(legalMoves, pieces[opposingColor]);
-//
-//             possibleMoves += legalMoves.filter((rank) => rank.map((file) => file.valid)).length;
-//
-//             updatedBoard[piece.position.rank][piece.position.file] = {
-//                 ...piece,
-//                 possibleMoves: legalMoves,
-//                 checksKing: checksKing
-//             };
-//         }
-//     }
-//
-//     return possibleMoves;
-// };
+// console.log(perftResult);

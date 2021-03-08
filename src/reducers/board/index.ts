@@ -12,6 +12,7 @@ import {
 import {Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
 import {fenToJson} from '../../utils/fen';
+import {Move} from '../../utils/moveGeneration';
 
 export type CastlingAvailability = {
     [key in Color]: {
@@ -22,6 +23,7 @@ export type CastlingAvailability = {
 
 export interface BoardState {
     board: BoardData;
+    possibleMoves: { [key in Color]: Array<Move> };
     activeColor: Color;
     castlesAvailable: CastlingAvailability;
     enPassant?: Position;
@@ -31,6 +33,10 @@ export interface BoardState {
 
 const initialState: BoardState = {
     board: [],
+    possibleMoves: {
+        [Color.WHITE]: [],
+        [Color.BLACK]: []
+    },
     activeColor: Color.WHITE,
     castlesAvailable: {
         [Color.WHITE]: {
@@ -78,7 +84,10 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
         case getType(setPossibleMovesAction):
             return {
                 ...state,
-                board: action.payload
+                possibleMoves: {
+                    ...state.possibleMoves,
+                    [action.payload.color]: action.payload.possibleMoves
+                }
             };
         case getType(setChecksAction):
             return {

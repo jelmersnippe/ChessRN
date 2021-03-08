@@ -9,22 +9,32 @@ import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../config/store';
 import {BoardActionTypes, commitMovementAction, setInitialStateAction} from '../../reducers/board/actions';
 import {createPiecesListFromBoard} from '../../utils/fen';
+import {Move} from '../../utils/moveGeneration';
+import isEqual from 'lodash.isequal';
 
 const Board: FunctionComponent = () => {
     const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     // const fenString = '1k6/8/8/2Q2K2/8/8/8/8 w - - 0 1';
     // const gameState = fenToJson('rnbqkbnr/1ppQ1pp1/7p/pB2p3/4P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1');
 
-    const {board, activeColor, checks} = useSelector((state: RootState) => state.board);
+    const {board, possibleMoves, activeColor, checks} = useSelector((state: RootState) => state.board);
     const dispatch = useDispatch<Dispatch<BoardActionTypes>>();
 
     const [selectedPiece, setSelectedPiece] = useState<PieceData | null>(null);
+    const [possibleMovesForSelectedPiece, setPossibleMovesForSelectedPiece] = useState<Array<Move> | null>([]);
 
     useEffect(() => {
-        if (!board) {
+        if (board.length === 0) {
             dispatch(setInitialStateAction(fenString));
         }
     }, [board]);
+
+    useEffect(() => {
+        if (selectedPiece) {
+            const possibleMovesForPiece = possibleMoves[activeColor].filter((move) => isEqual(move.startingSquare, selectedPiece?.position));
+            setPossibleMovesForSelectedPiece([...possibleMovesForPiece]);
+        }
+    }, [selectedPiece]);
 
     const renderRanks = (): JSX.Element => {
         if (!board) {
@@ -56,7 +66,10 @@ const Board: FunctionComponent = () => {
             let disabled = true;
 
             if (selectedPiece) {
-                const isPossibleMove = selectedPiece.possibleMoves?.[rankIndex][fileIndex].valid;
+                const isPossibleMove = possibleMovesForSelectedPiece?.some((move) => isEqual({
+                    rank: rankIndex,
+                    file: fileIndex
+                }, move.targetSquare));
                 const isSelectedPiece = selectedPiece.position.file === fileIndex && selectedPiece.position.rank === rankIndex;
 
                 if (isPossibleMove) {
@@ -99,7 +112,8 @@ const Board: FunctionComponent = () => {
                     piece={piece}
                     interactable={piece.color === activeColor}
                     selectAction={(pieceToSelect) => setSelectedPiece(pieceToSelect)}
-                    capturable={piece.color !== activeColor && !!selectedPiece && !!selectedPiece.possibleMoves?.[piece.position.rank][piece.position.file].valid}
+                    capturable={piece.color !== activeColor && !!selectedPiece &&
+                    !!possibleMovesForSelectedPiece?.some((move) => isEqual(piece.position, move.targetSquare))}
                     captureAction={(pieceToCapture) => commitMovement(pieceToCapture.position.rank, pieceToCapture.position.file)}
                 />);
             })
@@ -113,6 +127,7 @@ const Board: FunctionComponent = () => {
 
         dispatch(commitMovementAction({piece: selectedPiece, position: {rank, file}}));
         setSelectedPiece(null);
+        setPossibleMovesForSelectedPiece(null);
     };
 
     return (

@@ -2,7 +2,8 @@ import {ActionType, createAction} from 'typesafe-actions';
 import {BoardData, Color} from '../../constants/piece';
 import {PieceData, Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
-import {BoardState, CastlingAvailability} from './index';
+import {CastlingAvailability} from './index';
+import {Move} from '../../utils/moveGeneration';
 
 export const setInitialStateAction = createAction(
     'SET_INITIAL_STATE'
@@ -28,17 +29,13 @@ export const commitMovementAction = createAction(
     'COMMIT_MOVEMENT'
 )<{ piece: PieceData, position: Position }>();
 
-export const handleCaptureAction = createAction(
-    'HANDLE_CAPTURE'
-)<BoardState>();
-
 export const calculatePossibleMovesAction = createAction(
     'CALCULATE_POSSIBLE_MOVES'
-)<void>();
+)<Color>();
 
 export const setPossibleMovesAction = createAction(
     'SET_POSSIBLE_MOVES'
-)<BoardData>();
+)<{ color: Color, possibleMoves: Array<Move> }>();
 
 export const checkCastlingAvailabilityAction = createAction(
     'CHECK_CASTLING_AVAILABILITY'
@@ -61,7 +58,6 @@ export type BoardActionTypes =
     ActionType<typeof increaseTurnsAction> |
     ActionType<typeof setInitialStateAction> |
     ActionType<typeof commitMovementAction> |
-    ActionType<typeof handleCaptureAction> |
     ActionType<typeof checkCastlingAvailabilityAction> |
     ActionType<typeof setCastlingAvailabilityAction> |
     ActionType<typeof setEnPassantAction>

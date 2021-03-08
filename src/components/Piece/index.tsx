@@ -11,8 +11,6 @@ const Piece: FunctionComponent<Props> = ({piece, interactable, selectAction, cap
         <Animated.View
             style={{
                 ...styles.piece,
-                borderColor: piece.checksKing ? 'tomato' : 'transparent',
-                borderWidth: 4,
                 transform: [
                     {translateX: piece.position.file * theme.TILE_SIZE},
                     {translateY: piece.position.rank * theme.TILE_SIZE}

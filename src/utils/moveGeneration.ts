@@ -12,8 +12,11 @@ export interface Move {
     piece: PieceType;
 }
 
+// TODO: Make color optional
+// Currently when the turn switches and we only generate the moves for the 'new' active color
+// The check state does not update because the opponents possible moves are not updated
 export const generatePseudoLegalMoves = (gameState: BoardState, color: Color): Array<Move> => {
-    const pseudoLegalMoves: Array<Move> = [];
+    let pseudoLegalMoves: Array<Move> = [];
 
     if (!gameState.board) {
         throw new Error('No game state board passed to generateLegalMoves function');
@@ -23,23 +26,7 @@ export const generatePseudoLegalMoves = (gameState: BoardState, color: Color): A
 
     for (const piece of pieces[color]) {
         const movesForPiece = calculatePossibleMoves(piece, gameState.board, gameState.enPassant);
-
-        movesForPiece.map((rank) => rank.map((file) => file.valid));
-
-        // Add all moves that are considered valid into the pseudoLegalMoves array
-        for (let rank = 0; rank < movesForPiece.length; rank++) {
-            for (let file = 0; file < movesForPiece[rank].length; file++) {
-                const move = movesForPiece[rank][file];
-                if (move.valid) {
-                    pseudoLegalMoves.push({
-                        startingSquare: piece.position,
-                        targetSquare: {rank: rank, file: file},
-                        capture: move.capture ? gameState.board[rank][file] : null,
-                        piece: piece.type
-                    });
-                }
-            }
-        }
+        pseudoLegalMoves = pseudoLegalMoves.concat(movesForPiece);
     }
 
     return pseudoLegalMoves;

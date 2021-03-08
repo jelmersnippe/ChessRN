@@ -1,8 +1,9 @@
 import {PieceData, Position} from '../components/Piece/PieceData';
 import {BoardData, Color, PieceType} from '../constants/piece';
-import {createDuplicateBoard, createPiecesListFromBoard} from './fen';
 import {CastlingAvailability} from '../reducers/board';
 import store from '../config/store';
+import {Move} from './moveGeneration';
+import isEqual from 'lodash.isequal';
 
 export type MovePossibilityData = Array<Array<{ valid: boolean, capture: boolean }>>;
 
@@ -12,53 +13,7 @@ export enum CheckedState {
     STALEMATE = 'Stalemate'
 }
 
-export const validateMovesForCheck = (currentPosition: Position, possibleMoves: MovePossibilityData, opposingColor: Color, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
-    if (possibleMoves.length === 0) {
-        return [];
-    }
-
-    for (let rank = 0; rank < possibleMoves.length; rank++) {
-        for (let file = 0; file < possibleMoves[rank].length; file++) {
-            if (!possibleMoves[rank][file].valid) {
-                continue;
-            }
-
-            const tempBoard = createDuplicateBoard(board);
-            const selectedPiece = tempBoard[currentPosition.rank][currentPosition.file];
-
-            if (!selectedPiece) {
-                throw new Error('Trying to validate an invalid position');
-            }
-
-            // Set new position for selected piece
-            selectedPiece.position = {rank, file};
-            tempBoard[rank][file] = selectedPiece;
-
-            // Clear old position for selected piece
-            tempBoard[currentPosition.rank][currentPosition.file] = null;
-
-            const pieces = createPiecesListFromBoard(tempBoard);
-            const ownPieces = pieces[getOppositeColor(opposingColor)];
-            const opposingPieces = pieces[opposingColor];
-
-            for (const opposingPiece of opposingPieces) {
-                const opposingPossibleMoves = calculatePossibleMoves(opposingPiece, tempBoard, enPassant);
-                const opposingPieceChecksKing = canCaptureKing(opposingPossibleMoves, ownPieces);
-
-                // By making this move an opposing piece can capture our king, so the move is invalid
-                // We can skip the rest of the opposing pieces because this move is already considered invalid
-                if (opposingPieceChecksKing) {
-                    possibleMoves[rank][file].valid = false;
-                    break;
-                }
-            }
-        }
-    }
-
-    return possibleMoves;
-};
-
-export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
+export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPassant: Position | undefined): Array<Move> => {
     switch (piece.type) {
         case PieceType.KING:
             return kingMovement(piece, board);
@@ -75,27 +30,8 @@ export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPas
     }
 };
 
-const generateFalseMovementObject = (board: BoardData) => {
-    const movementPossible: Array<Array<{ valid: boolean, capture: boolean }>> = [];
-
-    for (let y = 0; y < board.length; y++) {
-        const rank: Array<{ valid: boolean, capture: boolean }> = [];
-
-        for (let x = 0; x < board[y].length; x++) {
-            rank.push({
-                valid: false,
-                capture: false
-            });
-        }
-
-        movementPossible.push(rank);
-    }
-
-    return movementPossible;
-};
-
-const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta: number, board: BoardData): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
+const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta: number, board: BoardData): Array<Move> => {
+    const possibleMoves: Array<Move> = [];
 
     let currentRankDistance = rankDelta;
     let currentFileDistance = fileDelta;
@@ -104,10 +40,17 @@ const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta:
     while (piece.position.rank + currentRankDistance >= 0 && piece.position.rank + currentRankDistance < 8 &&
     piece.position.file + currentFileDistance >= 0 && piece.position.file + currentFileDistance < 8) {
 
-        const rankToCheck = piece.position.rank + currentRankDistance;
-        const fileToCheck = piece.position.file + currentFileDistance;
-        const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
-        movementPossible[rankToCheck][fileToCheck] = move;
+        const targetSquare = {rank: piece.position.rank + currentRankDistance, file: piece.position.file + currentFileDistance};
+        const move = checkSquare(targetSquare, piece.color, board);
+
+        if (move.valid) {
+            possibleMoves.push({
+                startingSquare: piece.position,
+                targetSquare: targetSquare,
+                capture: move.capture,
+                piece: piece.type
+            });
+        }
 
         if (!move.valid || move.capture) {
             break;
@@ -117,35 +60,29 @@ const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta:
         currentFileDistance += fileDelta;
     }
 
-    return movementPossible;
+    return possibleMoves;
 };
 
-const slidingMovement = (piece: PieceData, board: BoardData, isValidSquare: (rankDelta: number, fileDelta: number) => boolean) => {
-    let possibleMoves: MovePossibilityData = generateFalseMovementObject(board);
+const slidingMovement = (piece: PieceData, board: BoardData, isValidSquare: (rankDelta: number, fileDelta: number) => boolean): Array<Move> => {
+    let possibleMoves: Array<Move> = [];
 
     for (let rankDelta = -1; rankDelta <= 1; rankDelta++) {
         for (let fileDelta = -1; fileDelta <= 1; fileDelta++) {
             if (!isValidSquare(rankDelta, fileDelta)) {
                 continue;
             }
-            console.log('valid square');
 
             // Merge just found moves with the already known possible moves
-            const partialMovesPossible = moveUntilCaptureOrBlock(piece, rankDelta, fileDelta, board);
-            possibleMoves = partialMovesPossible.map((rank, rankIndex) =>
-                rank.map((file, fileIndex) => ({
-                    valid: file.valid || possibleMoves[rankIndex][fileIndex].valid,
-                    capture: file.capture || possibleMoves[rankIndex][fileIndex].capture
-                }))
-            );
+            const partialPossibleMoves = moveUntilCaptureOrBlock(piece, rankDelta, fileDelta, board);
+            possibleMoves = possibleMoves.concat(partialPossibleMoves);
         }
     }
 
     return possibleMoves;
 };
 
-const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
+const knightMovement = (piece: PieceData, board: BoardData): Array<Move> => {
+    const possibleMoves: Array<Move> = [];
 
     for (let rank = piece.position.rank - 2; rank <= piece.position.rank + 2; rank++) {
         // Outside of the board
@@ -169,18 +106,27 @@ const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData
                 continue;
             }
 
-            movementPossible[rank][file] = checkSquare({
+            const move = checkSquare({
                 rank,
                 file
             }, piece.color, board);
+
+            if (move.valid) {
+                possibleMoves.push({
+                    startingSquare: piece.position,
+                    targetSquare: {rank, file},
+                    capture: move.capture,
+                    piece: piece.type
+                });
+            }
         }
     }
 
-    return movementPossible;
+    return possibleMoves;
 };
 
-const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
+const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
+    const possibleMoves: Array<Move> = [];
 
     for (let rank = piece.position.rank - 1; rank <= piece.position.rank + 1; rank++) {
         // Outside of the board
@@ -199,10 +145,19 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
                 continue;
             }
 
-            movementPossible[rank][file] = checkSquare({
+            const move = checkSquare({
                 rank,
                 file
             }, piece.color, board);
+
+            if (move.valid) {
+                possibleMoves.push({
+                    startingSquare: piece.position,
+                    targetSquare: {rank, file},
+                    capture: move.capture,
+                    piece: piece.type
+                });
+            }
         }
 
         // TODO: pass these as parameters by passing the state from the calculate possible moves epic
@@ -210,16 +165,31 @@ const kingMovement = (piece: PieceData, board: BoardData): MovePossibilityData =
         const availableCastles = store.getState().board.castlesAvailable[piece.color];
 
         if (!isChecked && !piece.hasMoved && (availableCastles.kingSide || availableCastles.queenSide)) {
-            movementPossible[piece.position.rank][piece.position.file - 2].valid = availableCastles.queenSide && validateCastle(piece, 'queen', board);
-            movementPossible[piece.position.rank][piece.position.file + 2].valid = availableCastles.kingSide && validateCastle(piece, 'king', board);
+            if (availableCastles.queenSide && validateCastle(piece, 'queen', board)) {
+                possibleMoves.push({
+                    startingSquare: piece.position,
+                    targetSquare: {rank: piece.position.rank, file: piece.position.file - 2},
+                    capture: null,
+                    piece: piece.type
+                });
+            }
+
+            if (availableCastles.queenSide && validateCastle(piece, 'king', board)) {
+                possibleMoves.push({
+                    startingSquare: piece.position,
+                    targetSquare: {rank: piece.position.rank, file: piece.position.file + 2},
+                    capture: null,
+                    piece: piece.type
+                });
+            }
         }
     }
 
-    return movementPossible;
+    return possibleMoves;
 };
 
 const validateCastle = (king: PieceData, side: 'queen' | 'king', board: BoardData): boolean => {
-    const opposingPieces = createPiecesListFromBoard(board)[getOppositeColor(king.color)];
+    // const opposingPieces = createPiecesListFromBoard(board)[getOppositeColor(king.color)];
 
     for (
         let file = side === 'queen' ? king.position.file - 1 : king.position.file + 1;
@@ -235,11 +205,15 @@ const validateCastle = (king: PieceData, side: 'queen' | 'king', board: BoardDat
             return false;
         }
 
-        for (const opposingPiece of opposingPieces) {
-            if (opposingPiece.possibleMoves[king.position.rank][file].valid) {
-                return false;
-            }
-        }
+        // TODO: Re-add this check
+        // It checks all the squares from the king to the rook it wants to castle with
+        // To see if they are attackable by the opponent, because this makes the castle illegal
+
+        // for (const opposingPiece of opposingPieces) {
+        //     if (opposingPiece.possibleMoves[king.position.rank][file].valid) {
+        //         return false;
+        //     }
+        // }
     }
 
     return true;
@@ -267,48 +241,60 @@ export const anyCastlesAvailable = (castlingAvailabilities: CastlingAvailability
     return false;
 };
 
-const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
+const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | undefined): Array<Move> => {
+    const possibleMoves: Array<Move> = [];
 
     const rankDelta = piece.color === Color.WHITE ? -1 : 1;
 
     // TODO: Reached the final line -> should be promoted
     if (piece.position.rank + rankDelta < 0 || piece.position.rank + rankDelta > 7) {
-        return movementPossible;
+        return possibleMoves;
     }
 
     for (let fileDelta = -1; fileDelta <= 1; fileDelta++) {
         if (piece.position.file + fileDelta >= 0 && piece.position.file + fileDelta < 8) {
-            const move = checkSquare({rank: piece.position.rank + rankDelta, file: piece.position.file + fileDelta}, piece.color, board);
+            const targetSquare = {rank: piece.position.rank + rankDelta, file: piece.position.file + fileDelta};
+            const move = checkSquare(targetSquare, piece.color, board);
 
-            if (enPassant && enPassant.rank === piece.position.rank + rankDelta && enPassant.file === piece.position.file + fileDelta) {
-                movementPossible[piece.position.rank + rankDelta][piece.position.file + fileDelta] = {
-                    valid: true,
-                    capture: true
-                };
-            } else {
-                movementPossible[piece.position.rank + rankDelta][piece.position.file + fileDelta] = {
-                    valid: fileDelta === 0 ? (move.valid && !move.capture) : move.capture,
-                    capture: fileDelta === 0 ? false : move.capture
-                };
+            if (enPassant && isEqual(enPassant, targetSquare)) {
+                possibleMoves.push({
+                    startingSquare: piece.position,
+                    targetSquare: targetSquare,
+                    capture: board[targetSquare.rank][targetSquare.file],
+                    piece: piece.type
+                });
+            }
+            // Valid forward move that is not a capture, or a diagonal capture
+            else if ((fileDelta === 0 && (move.valid && !move.capture)) || (fileDelta !== 0 && !!move.capture)) {
+                possibleMoves.push({
+                    startingSquare: piece.position,
+                    targetSquare: targetSquare,
+                    capture: move.capture,
+                    piece: piece.type
+                });
+
+                // If the pawn hasn't moved yet and it can move one step forward
+                // Check if a double push is possible
+                if (!piece.hasMoved && fileDelta === 0) {
+                    const doublePushTargetSquare = {rank: piece.position.rank + (rankDelta * 2), file: piece.position.file};
+                    const doublePushMove = checkSquare(doublePushTargetSquare, piece.color, board);
+                    if (doublePushMove.valid && !doublePushMove.capture) {
+                        possibleMoves.push({
+                            startingSquare: piece.position,
+                            targetSquare: doublePushTargetSquare,
+                            capture: doublePushMove.capture,
+                            piece: piece.type
+                        });
+                    }
+                }
             }
         }
     }
 
-    // If the pawn hasn't moved yet and it can move one step forward
-    // Check if a double push is possible
-    if (!piece.hasMoved && movementPossible[piece.position.rank + rankDelta][piece.position.file]) {
-        const move = checkSquare({rank: piece.position.rank + (rankDelta * 2), file: piece.position.file}, piece.color, board);
-        movementPossible[piece.position.rank + (rankDelta * 2)][piece.position.file] = {
-            valid: (move.valid && !move.capture),
-            capture: false
-        };
-    }
-
-    return movementPossible;
+    return possibleMoves;
 };
 
-const checkSquare = (position: Position, pieceColor: Color, board: BoardData): { valid: boolean, capture: boolean } => {
+const checkSquare = (position: Position, pieceColor: Color, board: BoardData): { valid: boolean, capture: null | PieceData } => {
     if (position.rank < 0 || position.rank > 7 || position.file < 0 || position.file > 7) {
         throw new Error(`Tried to validate a position outside of the board.\nRank: ${position.rank}\tFile: ${position.file}`);
     }
@@ -316,29 +302,13 @@ const checkSquare = (position: Position, pieceColor: Color, board: BoardData): {
     const squareToCheck = board[position.rank][position.file];
     return {
         valid: squareToCheck === null || squareToCheck.color !== pieceColor,
-        capture: squareToCheck !== null && squareToCheck.color !== pieceColor
+        capture: squareToCheck?.color === pieceColor ? null : squareToCheck
     };
 };
 
-export const canCaptureKing = (possibleMoves: MovePossibilityData, opposingPieces: Array<PieceData>): boolean => {
-    const opposingKing = opposingPieces.find((piece) => piece.type === PieceType.KING);
-
-    if (!opposingKing) {
-        throw new Error('No king of opposing color on the board');
-    }
-
-    return !!possibleMoves?.[opposingKing.position.rank][opposingKing.position.file].valid;
+export const isChecked = (opposingMoves: Array<Move>, kingPosition: Position): boolean => {
+    return opposingMoves.some((opposingMove) => isEqual(opposingMove.targetSquare, kingPosition));
 };
-
-export const isChecked = (pieces: { [key in Color]: Array<PieceData> }, colorToCheck: Color): boolean => {
-    const oppositeColor = getOppositeColor(colorToCheck);
-    return !!pieces[oppositeColor].find((piece) => piece.checksKing);
-};
-
-export const getMovesLeft = (pieces: Array<PieceData>) =>
-    pieces.reduce((possibleMoves, piece) => {
-        return possibleMoves + (piece.possibleMoves ? piece.possibleMoves.flat(1).filter((possible) => possible.valid).length : 0);
-    }, 0);
 
 export const getCheckedStatus = (checked: boolean, movesLeft: number): CheckedState | false => {
     if (movesLeft > 0) {

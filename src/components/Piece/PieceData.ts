@@ -1,5 +1,4 @@
 import {Color, PieceType} from '../../constants/piece';
-import {MovePossibilityData} from '../../utils/pieceMovement';
 
 /*
     Material points:
@@ -20,7 +19,5 @@ export interface PieceData {
     color: Color;
     type: PieceType;
     position: Position;
-    possibleMoves: MovePossibilityData;
     hasMoved?: boolean;
-    checksKing?: boolean;
 }

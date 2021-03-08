@@ -12,34 +12,25 @@ import {
     setInitialStateAction,
     setPossibleMovesAction
 } from './actions';
-import {filter, map, mapTo, mergeMap} from 'rxjs/operators';
-import {
-    anyCastlesAvailable,
-    calculatePossibleMoves,
-    canCaptureKing,
-    getCastlingAvailability,
-    getCheckedStatus,
-    getMovesLeft,
-    getOppositeColor,
-    isChecked,
-    validateMovesForCheck
-} from '../../utils/pieceMovement';
+import {filter, map, mergeMap} from 'rxjs/operators';
+import {anyCastlesAvailable, getCastlingAvailability, getCheckedStatus, getOppositeColor, isChecked} from '../../utils/pieceMovement';
 import {RootState} from '../../config/store';
 import {isActionOf} from 'typesafe-actions';
 import {Color, PieceType} from '../../constants/piece';
 import {of} from 'rxjs';
 import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
 import {CastlingAvailability} from './index';
+import {generateLegalMoves} from '../../utils/moveGeneration';
+import isEqual from 'lodash.isequal';
 
-const setInitialStateEpic: Epic = (action$) => action$.pipe(
+const setInitialStateEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(setInitialStateAction)),
-    mapTo(calculatePossibleMovesAction())
+    map(() => calculatePossibleMovesAction(state$.value.board.activeColor))
 );
 
 const setBoardEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(setBoardAction)),
     mergeMap(() => of(
-        calculatePossibleMovesAction(),
         checkCastlingAvailabilityAction(),
         setActiveColorAction(getOppositeColor(state$.value.board.activeColor))
     ))
@@ -47,42 +38,19 @@ const setBoardEpic: Epic = (action$, state$: StateObservable<RootState>) => acti
 
 const increaseTurnsEpic: Epic = (action$) => action$.pipe(
     filter(isActionOf(setActiveColorAction)),
-    filter((action) => action.payload === Color.WHITE),
-    mapTo(increaseTurnsAction())
+    // filter((action) => action.payload === Color.WHITE),
+    mergeMap((action) => of(
+        calculatePossibleMovesAction(action.payload),
+        increaseTurnsAction()
+    ))
 );
 
 const updatePossibleMovesEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(calculatePossibleMovesAction)),
-    filter(() => state$.value.board.board !== null),
-    map(() => {
-        const {board, enPassant} = state$.value.board;
+    map((action) => {
+        const newGenerationMethodsLegalMoves = generateLegalMoves(state$.value.board, action.payload);
 
-        if (!board) {
-            throw new Error('No board');
-        }
-
-        const pieces = createPiecesListFromBoard(board);
-        const updatedBoard = createDuplicateBoard(board);
-        const pieceColors = Object.keys(pieces) as Array<Color>;
-
-        for (const color of pieceColors) {
-            for (const piece of pieces[color]) {
-                const opposingColor = getOppositeColor(piece.color);
-
-                // TODO: Pass the state to these instead of passing everything seperately
-                const possibleMoves = calculatePossibleMoves(piece, board, enPassant);
-                const validatedPossibleMoves = validateMovesForCheck(piece.position, possibleMoves, opposingColor, board, enPassant);
-
-                const checksKing = canCaptureKing(validatedPossibleMoves, pieces[opposingColor]);
-
-                updatedBoard[piece.position.rank][piece.position.file] = {
-                    ...piece,
-                    possibleMoves: validatedPossibleMoves,
-                    checksKing: checksKing
-                };
-            }
-        }
-        return setPossibleMovesAction(updatedBoard);
+        return setPossibleMovesAction({color: state$.value.board.activeColor, possibleMoves: newGenerationMethodsLegalMoves});
     })
 );
 
@@ -91,25 +59,25 @@ const validateChecksEpic: Epic = (action$, state$: StateObservable<RootState>) =
     filter(() => state$.value.board.board !== null),
     filter(() => state$.value.board.turns > 1),
     map(() => {
-        const {board} = state$.value.board;
+        const {board, possibleMoves, activeColor} = state$.value.board;
 
         if (!board) {
             throw new Error('No board');
         }
 
-        const pieces = createPiecesListFromBoard(board);
-        const movesLeft = {
-            [Color.WHITE]: getMovesLeft(pieces[Color.WHITE]),
-            [Color.BLACK]: getMovesLeft(pieces[Color.BLACK])
-        };
-        const checked = {
-            [Color.WHITE]: isChecked(pieces, Color.WHITE),
-            [Color.BLACK]: isChecked(pieces, Color.BLACK)
-        };
+        // We need to get the kings position -> either find it in the board or
+        const pieces = createPiecesListFromBoard(board)[activeColor];
+        const kingPosition = pieces.find((piece) => piece.type === PieceType.KING)?.position;
+
+        if (!kingPosition) {
+            throw new Error('No king found on the board while checking for checks');
+        }
+
+        const movesLeft = possibleMoves[activeColor].length;
+        const checked = isChecked(possibleMoves[getOppositeColor(activeColor)], kingPosition);
 
         const checks = {
-            [Color.WHITE]: getCheckedStatus(checked[Color.WHITE], movesLeft[Color.WHITE]),
-            [Color.BLACK]: getCheckedStatus(checked[Color.BLACK], movesLeft[Color.BLACK])
+            [activeColor]: getCheckedStatus(checked, movesLeft)
         };
 
         return setChecksAction(checks);
@@ -141,7 +109,7 @@ const checkCastlingAvailabilityEpic: Epic = (action$, state$: StateObservable<Ro
 const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(commitMovementAction)),
     filter(() => state$.value.board.board !== null),
-    filter((action) => action.payload.piece.possibleMoves[action.payload.position.rank][action.payload.position.file].valid),
+    filter((action) => state$.value.board.possibleMoves[state$.value.board.activeColor].some((move) => isEqual(move.targetSquare, action.payload.position) && isEqual(move.startingSquare, action.payload.piece.position))),
     mergeMap((action) => {
         const {board, enPassant} = state$.value.board;
         const {piece, position} = action.payload;
@@ -186,6 +154,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
 
         return of(
             setBoardAction([...updatedBoard]),
+            calculatePossibleMovesAction(piece.color),
             setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? {
                 rank: position.rank + Math.sign(oldPosition.rank - position.rank),
                 file: position.file
