@@ -21,7 +21,7 @@ export type CastlingAvailability = {
 }
 
 export interface BoardState {
-    board: BoardData | null;
+    board: BoardData;
     activeColor: Color;
     castlesAvailable: CastlingAvailability;
     enPassant?: Position;
@@ -30,7 +30,7 @@ export interface BoardState {
 }
 
 const initialState: BoardState = {
-    board: null,
+    board: [],
     activeColor: Color.WHITE,
     castlesAvailable: {
         [Color.WHITE]: {

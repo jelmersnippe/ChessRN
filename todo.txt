@@ -5,3 +5,19 @@
 - Add move history
 - Re-add animated movement
 - Turn the board state back into a fen string
+
+
+Change move generation so you can (optionally) pass a color as parameter
+Only calculate the moves for the new active color on active color switch
+When checking if moves are legal by generating all opposing moves:
+ -> Only pinned pieces will generate a check when moved
+ -> Pieces can only be pinned by the rook, bishop and queen. So we dont have to generate moves for all other opposing pieces
+ -> It would be even better to recognise a pin when a move is committed, and save it to the state. Then we only have to validate moves and update pins when any of the pinned squares/involved pieces change
+
+Add a script that can generate moves up to a certain depth and check if the amount of moves is correct according to https://www.chessprogramming.org/Perft_Results
+Take castling and en passant into account when generating possible moves. A pawn can currently capture en passant and reveal a discovered attack on the king because the script does not take into account that the opposing pawn will be removed
+Make sure the move generation script can run in isolation, currently it uses state data which shouldnt be happening because it makes chain generating moves imposible.
+ -> Pass the full board state to the move generation script, and return a full game state aswell
+ -> Maybe make a proper move list instead of saving possible moves on the pawns
+
+After setting the board, save pieces in the state. Update these pieces when a move is committed. By doing this we don't have to generate all pieces from the board every turn
