@@ -59,37 +59,20 @@ export const validateMovesForCheck = (currentPosition: Position, possibleMoves: 
 };
 
 export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPassant: Position | undefined): MovePossibilityData => {
-    let possibleMoves: MovePossibilityData = [];
-
     switch (piece.type) {
         case PieceType.KING:
-            possibleMoves = kingMovement(piece, board);
-            break;
+            return kingMovement(piece, board);
         case PieceType.QUEEN:
-            const orthogonalMoves = orthogonalMovement(piece, board);
-            const diagonalMoves = diagonalMovement(piece, board);
-            possibleMoves = orthogonalMoves.map((rank, rankIndex) =>
-                rank.map((file, fileIndex) => ({
-                    valid: file.valid || diagonalMoves[rankIndex][fileIndex].valid,
-                    capture: file.capture || diagonalMoves[rankIndex][fileIndex].capture
-                }))
-            );
-            break;
+            return slidingMovement(piece, board, (rankDelta, fileDelta) => rankDelta === 0 && fileDelta === 0);
         case PieceType.KNIGHT:
-            possibleMoves = knightMovement(piece, board);
-            break;
+            return knightMovement(piece, board);
         case PieceType.ROOK:
-            possibleMoves = orthogonalMovement(piece, board);
-            break;
+            return slidingMovement(piece, board, (rankDelta, fileDelta) => Math.abs(rankDelta) === Math.abs(fileDelta));
         case PieceType.BISHOP:
-            possibleMoves = diagonalMovement(piece, board);
-            break;
+            return slidingMovement(piece, board, (rankDelta, fileDelta) => rankDelta === 0 || fileDelta === 0);
         case PieceType.PAWN:
-            possibleMoves = pawnMovement(piece, board, enPassant);
-            break;
+            return pawnMovement(piece, board, enPassant);
     }
-
-    return possibleMoves;
 };
 
 const generateFalseMovementObject = (board: BoardData) => {
@@ -111,125 +94,50 @@ const generateFalseMovementObject = (board: BoardData) => {
     return movementPossible;
 };
 
-const orthogonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
+const moveUntilCaptureOrBlock = (piece: PieceData, rankDelta: number, fileDelta: number, board: BoardData): MovePossibilityData => {
     const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
 
-    // Check to the left
-    let fileToCheck = piece.position.file - 1;
-    while (fileToCheck >= 0) {
-        const move = checkSquare({rank: piece.position.rank, file: fileToCheck}, piece.color, board);
-        movementPossible[piece.position.rank][fileToCheck] = move;
+    // If the square is inside the board
+    while (piece.position.rank + rankDelta >= 0 && piece.position.rank + rankDelta < 8 &&
+    piece.position.file + fileDelta >= 0 && piece.position.file + fileDelta < 8) {
+
+        const rankToCheck = piece.position.rank + rankDelta;
+        const fileToCheck = piece.position.file + fileDelta;
+        const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
+        movementPossible[rankToCheck][fileToCheck] = move;
 
         if (!move.valid || move.capture) {
             break;
         }
 
-        fileToCheck--;
-    }
-
-    // Check to the right
-    fileToCheck = piece.position.file + 1;
-    while (fileToCheck < 8) {
-        const move = checkSquare({rank: piece.position.rank, file: fileToCheck}, piece.color, board);
-        movementPossible[piece.position.rank][fileToCheck] = move;
-
-        if (!move.valid || move.capture) {
-            break;
-        }
-
-        fileToCheck++;
-    }
-
-    // Check above
-    let rankToCheck = piece.position.rank - 1;
-    while (rankToCheck >= 0) {
-        const move = checkSquare({rank: rankToCheck, file: piece.position.file}, piece.color, board);
-        movementPossible[rankToCheck][piece.position.file] = move;
-
-        if (!move.valid || move.capture) {
-            break;
-        }
-
-        rankToCheck--;
-    }
-
-    // Check below
-    rankToCheck = piece.position.rank + 1;
-    while (rankToCheck < 8) {
-        const move = checkSquare({rank: rankToCheck, file: piece.position.file}, piece.color, board);
-        movementPossible[rankToCheck][piece.position.file] = move;
-
-        if (!move.valid || move.capture) {
-            break;
-        }
-
-        rankToCheck++;
+        rankDelta += rankDelta;
+        fileDelta += fileDelta;
     }
 
     return movementPossible;
 };
 
-const diagonalMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
-    const movementPossible: MovePossibilityData = generateFalseMovementObject(board);
+const slidingMovement = (piece: PieceData, board: BoardData, isValidSquare: (rankDelta: number, fileDelta: number) => boolean) => {
+    let possibleMoves: MovePossibilityData = generateFalseMovementObject(board);
 
-    let rankToCheck = piece.position.rank - 1;
-    let fileToCheck = piece.position.file - 1;
+    for (let rankDelta = -1; rankDelta <= 1; rankDelta++) {
+        for (let fileDelta = -1; fileDelta <= 1; fileDelta++) {
+            if (!isValidSquare(rankDelta, fileDelta)) {
+                continue;
+            }
 
-    while (rankToCheck >= 0 && fileToCheck >= 0) {
-        const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
-        movementPossible[rankToCheck][fileToCheck] = move;
-
-        if (!move.valid || move.capture) {
-            break;
+            // Merge just found moves with the already known possible moves
+            const partialMovesPossible = moveUntilCaptureOrBlock(piece, rankDelta, fileDelta, board);
+            possibleMoves = partialMovesPossible.map((rank, rankIndex) =>
+                rank.map((file, fileIndex) => ({
+                    valid: file.valid || partialMovesPossible[rankIndex][fileIndex].valid,
+                    capture: file.capture || partialMovesPossible[rankIndex][fileIndex].capture
+                }))
+            );
         }
-
-        rankToCheck--;
-        fileToCheck--;
     }
 
-    rankToCheck = piece.position.rank + 1;
-    fileToCheck = piece.position.file + 1;
-    while (rankToCheck < 8 && fileToCheck < 8) {
-        const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
-        movementPossible[rankToCheck][fileToCheck] = move;
-
-        if (!move.valid || move.capture) {
-            break;
-        }
-
-        rankToCheck++;
-        fileToCheck++;
-    }
-
-    rankToCheck = piece.position.rank - 1;
-    fileToCheck = piece.position.file + 1;
-    while (rankToCheck >= 0 && fileToCheck < 8) {
-        const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
-        movementPossible[rankToCheck][fileToCheck] = move;
-
-        if (!move.valid || move.capture) {
-            break;
-        }
-
-        rankToCheck--;
-        fileToCheck++;
-    }
-
-    rankToCheck = piece.position.rank + 1;
-    fileToCheck = piece.position.file - 1;
-    while (rankToCheck < 8 && fileToCheck >= 0) {
-        const move = checkSquare({rank: rankToCheck, file: fileToCheck}, piece.color, board);
-        movementPossible[rankToCheck][fileToCheck] = move;
-
-        if (!move.valid || move.capture) {
-            break;
-        }
-
-        rankToCheck++;
-        fileToCheck--;
-    }
-
-    return movementPossible;
+    return possibleMoves;
 };
 
 const knightMovement = (piece: PieceData, board: BoardData): MovePossibilityData => {
@@ -333,7 +241,7 @@ const validateCastle = (king: PieceData, side: 'queen' | 'king', board: BoardDat
     return true;
 };
 
-export const getCastlingAvailability = (pieces: Array<PieceData>): {kingSide: boolean, queenSide: boolean} => {
+export const getCastlingAvailability = (pieces: Array<PieceData>): { kingSide: boolean, queenSide: boolean } => {
     const king = pieces.find((piece) => piece.type === PieceType.KING && !piece.hasMoved);
     const queenSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && !piece.hasMoved && piece.position.file === 0);
     const kingSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && !piece.hasMoved && piece.position.file === 7);
@@ -344,7 +252,7 @@ export const getCastlingAvailability = (pieces: Array<PieceData>): {kingSide: bo
     };
 };
 
-export const anyCastlesAvailable = (castlingAvailabilities: CastlingAvailability) =>  {
+export const anyCastlesAvailable = (castlingAvailabilities: CastlingAvailability) => {
     const colors = Object.keys(castlingAvailabilities) as Array<Color>;
     for (const color of colors) {
         if (castlingAvailabilities[color].kingSide || castlingAvailabilities[color].queenSide) {
