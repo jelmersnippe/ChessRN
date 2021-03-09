@@ -50,7 +50,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
 import {BoardData, Color, PieceType, RankData} from '../constants/piece';
 import {PieceData} from '../components/Piece/PieceData';
-import {CastlingAvailability} from '../reducers/board';
+import {BoardState, CastlingAvailability} from '../reducers/board/types';
 
 const fenPieces = {
     p: 'Pawn',
@@ -61,22 +61,29 @@ const fenPieces = {
     q: 'Queen'
 };
 
-export const fenToJson = (fen: string) => {
+export const fenToJson = (fen: string): BoardState => {
     const fenElements = fen.split(' ');
 
     const board: BoardData = parseFenBoard(fenElements[0]);
     const activeColor: Color = fenElements[1] === Color.WHITE ? Color.WHITE : Color.BLACK;
-    const castlingPossibilities: CastlingAvailability = parseFenCastlingPossibilities(fenElements[2]);
+    const castlesAvailable: CastlingAvailability = parseFenCastlingPossibilities(fenElements[2]);
 
-    const halfMoveClock = parseInt(fenElements[4], 10);
+    // const halfMoveClock = parseInt(fenElements[4], 10);
     const fullMoveNumber = parseInt(fenElements[5], 10);
 
     return {
+        castlesAvailable: castlesAvailable,
+        checks: {
+            [Color.BLACK]: false,
+            [Color.WHITE]: false
+        },
+        possibleMoves: {
+            [Color.BLACK]: [],
+            [Color.WHITE]: []
+        },
+        turns: fullMoveNumber,
         board,
-        activeColor,
-        castlingPossibilities,
-        halfMoveClock,
-        fullMoveNumber
+        activeColor
     };
 };
 
@@ -137,7 +144,8 @@ const parseFenBoard = (fenBoard: string): BoardData => {
                 rank.push({
                     color: pieceToColor(fenFile),
                     type: pieceToType(fenFile),
-                    position: {rank: currentRank, file: currentFile}
+                    position: {rank: currentRank, file: currentFile},
+                    timesMoved: pieceToType(fenFile) === PieceType.PAWN && ((pieceToColor(fenFile) === Color.BLACK && currentRank !== 1) || (pieceToColor(fenFile) === Color.WHITE && currentRank !== 6)) ? 1 : 0
                 });
                 currentFile++;
             } else {
@@ -169,4 +177,3 @@ const parseFenCastlingPossibilities = (fenCastlingPossibilities: string): Castli
     };
 };
 
-export const getOppositeColor = (color: Color) => color === Color.WHITE ? Color.BLACK : Color.WHITE;

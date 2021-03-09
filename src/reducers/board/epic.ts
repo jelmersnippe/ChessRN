@@ -13,16 +13,16 @@ import {
     setPossibleMovesAction
 } from './actions';
 import {filter, map, mergeMap} from 'rxjs/operators';
-import {getOppositeColor} from '../../utils/fen';
 import {RootState} from '../../config/store';
 import {isActionOf} from 'typesafe-actions';
 import {Color, PieceType} from '../../constants/piece';
 import {of} from 'rxjs';
 import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
-import {CastlingAvailability} from './index';
 import {generateLegalMoves} from '../../utils/moveGeneration';
 import isEqual from 'lodash.isequal';
 import {anyCastlesAvailable, getCastlingAvailability, getCheckedStatus, isChecked} from '../../utils/movementValidation';
+import {CastlingAvailability} from './types';
+import {getOppositeColor} from '../../utils/conversions';
 
 const setInitialStateEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(setInitialStateAction)),
@@ -125,7 +125,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
         updatedBoard[piece.position.rank][piece.position.file] = null;
         updatedBoard[position.rank][position.file] = piece;
 
-        piece.hasMoved = true;
+        piece.timesMoved++;
         piece.position = {rank: position.rank, file: position.file};
 
         // TODO: These have to be taken into account when calculating movement
@@ -144,7 +144,7 @@ const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) =
 
             updatedBoard[position.rank][currentRookFile] = null;
             updatedBoard[position.rank][newRookFile] = rook;
-            rook.hasMoved = true;
+            rook.timesMoved++;
             rook.position = {rank: position.rank, file: newRookFile};
         }
 

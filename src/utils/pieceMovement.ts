@@ -162,7 +162,7 @@ const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
         const isChecked = store.getState().board.checks[piece.color];
         const availableCastles = store.getState().board.castlesAvailable[piece.color];
 
-        if (!isChecked && !piece.hasMoved && (availableCastles.kingSide || availableCastles.queenSide)) {
+        if (!isChecked && piece.timesMoved === 0 && (availableCastles.kingSide || availableCastles.queenSide)) {
             if (availableCastles.queenSide && validateCastle(piece, 'queen', board)) {
                 possibleMoves.push({
                     startingSquare: piece.position,
@@ -220,7 +220,7 @@ const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | 
 
                 // If the pawn hasn't moved yet and it can move one step forward
                 // Check if a double push is possible
-                if (!piece.hasMoved && fileDelta === 0) {
+                if (piece.timesMoved === 0 && fileDelta === 0) {
                     const doublePushTargetSquare = {rank: piece.position.rank + (rankDelta * 2), file: piece.position.file};
                     const doublePushMove = checkSquare(doublePushTargetSquare, piece.color, board);
                     if (doublePushMove.valid && !doublePushMove.capture) {

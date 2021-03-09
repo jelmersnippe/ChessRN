@@ -2,8 +2,8 @@ import {ActionType, createAction} from 'typesafe-actions';
 import {BoardData, Color} from '../../constants/piece';
 import {PieceData, Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
-import {CastlingAvailability} from './index';
 import {Move} from '../../utils/moveGeneration';
+import {CastlingAvailability} from './types';
 
 export const setInitialStateAction = createAction(
     'SET_INITIAL_STATE'

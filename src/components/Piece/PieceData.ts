@@ -19,5 +19,5 @@ export interface PieceData {
     color: Color;
     type: PieceType;
     position: Position;
-    hasMoved?: boolean;
+    timesMoved: number;
 }

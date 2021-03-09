@@ -3,7 +3,7 @@ import {BoardData, Color, PieceType} from '../constants/piece';
 import {Move} from './moveGeneration';
 import isEqual from 'lodash.isequal';
 import {CheckedState} from './pieceMovement';
-import {CastlingAvailability} from '../reducers/board';
+import {CastlingAvailability} from '../reducers/board/types';
 
 export const checkSquare = (position: Position, pieceColor: Color, board: BoardData): { valid: boolean, capture: null | PieceData } => {
     if (position.rank < 0 || position.rank > 7 || position.file < 0 || position.file > 7) {
@@ -31,9 +31,9 @@ export const getCheckedStatus = (checked: boolean, movesLeft: number): CheckedSt
 
 
 export const getCastlingAvailability = (pieces: Array<PieceData>): { kingSide: boolean, queenSide: boolean } => {
-    const king = pieces.find((piece) => piece.type === PieceType.KING && !piece.hasMoved);
-    const queenSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && !piece.hasMoved && piece.position.file === 0);
-    const kingSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && !piece.hasMoved && piece.position.file === 7);
+    const king = pieces.find((piece) => piece.type === PieceType.KING && piece.timesMoved === 0);
+    const queenSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && piece.timesMoved === 0 && piece.position.file === 0);
+    const kingSideRook = pieces.find((piece) => piece.type === PieceType.ROOK && piece.timesMoved === 0 && piece.position.file === 7);
 
     return {
         kingSide: !!king && !!kingSideRook,

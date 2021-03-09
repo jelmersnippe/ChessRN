@@ -2,8 +2,8 @@ import React, {FunctionComponent} from 'react';
 import {Animated, Image, TouchableOpacity} from 'react-native';
 import styles from './styles';
 import {Props} from './Props';
-import {pieceImages} from '../../constants/piece';
 import theme from '../../config/theme';
+import {pieceImages} from './pieceImages';
 
 const Piece: FunctionComponent<Props> = ({piece, interactable, selectAction, capturable, captureAction}) => {
 

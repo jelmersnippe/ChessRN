@@ -1,35 +1,18 @@
-import {BoardData, Color} from '../../constants/piece';
+import {Color} from '../../constants/piece';
 import {getType, Reducer} from 'typesafe-actions';
 import {
     BoardActionTypes,
     increaseTurnsAction,
     setActiveColorAction,
-    setBoardAction, setCastlingAvailabilityAction,
-    setChecksAction, setEnPassantAction,
+    setBoardAction,
+    setCastlingAvailabilityAction,
+    setChecksAction,
+    setEnPassantAction,
     setInitialStateAction,
     setPossibleMovesAction
 } from './actions';
-import {Position} from '../../components/Piece/PieceData';
-import {CheckedState} from '../../utils/pieceMovement';
 import {fenToJson} from '../../utils/fen';
-import {Move} from '../../utils/moveGeneration';
-
-export type CastlingAvailability = {
-    [key in Color]: {
-        queenSide: boolean;
-        kingSide: boolean;
-    }
-}
-
-export interface BoardState {
-    board: BoardData;
-    possibleMoves: { [key in Color]: Array<Move> };
-    activeColor: Color;
-    castlesAvailable: CastlingAvailability;
-    enPassant?: Position;
-    checks: { [key in Color]: CheckedState | false };
-    turns: number;
-}
+import {BoardState} from './types';
 
 const initialState: BoardState = {
     board: [],
@@ -60,16 +43,9 @@ const boardReducer: Reducer<BoardState, BoardActionTypes> = (state = initialStat
         case getType(setInitialStateAction):
             const gameState = fenToJson(action.payload);
 
-            const newState = {
-                board: gameState.board,
-                activeColor: gameState.activeColor,
-                castlesAvailable: gameState.castlingPossibilities,
-                turns: gameState.fullMoveNumber
-            };
-
             return {
                 ...initialState,
-                ...newState
+                ...gameState
             };
         case getType(setActiveColorAction):
             return {
