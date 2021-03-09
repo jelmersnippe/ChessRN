@@ -157,29 +157,29 @@ const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
                 });
             }
         }
+    }
 
-        // TODO: pass these as parameters by passing the state from the calculate possible moves epic
-        const isChecked = store.getState().board.checks[piece.color];
-        const availableCastles = store.getState().board.castlesAvailable[piece.color];
+    // TODO: pass these as parameters by passing the state from the calculate possible moves epic
+    const isChecked = store.getState().board.checks[piece.color];
+    const availableCastles = store.getState().board.castlesAvailable[piece.color];
 
-        if (!isChecked && piece.timesMoved === 0 && (availableCastles.kingSide || availableCastles.queenSide)) {
-            if (availableCastles.queenSide && validateCastle(piece, 'queen', board)) {
-                possibleMoves.push({
-                    startingSquare: piece.position,
-                    targetSquare: {rank: piece.position.rank, file: piece.position.file - 2},
-                    capture: null,
-                    piece: piece.type
-                });
-            }
+    if (!isChecked && piece.timesMoved === 0 && (availableCastles.kingSide || availableCastles.queenSide)) {
+        if (availableCastles.queenSide && validateCastle(piece, 'queen', board)) {
+            possibleMoves.push({
+                startingSquare: piece.position,
+                targetSquare: {rank: piece.position.rank, file: piece.position.file - 2},
+                capture: null,
+                piece: piece.type
+            });
+        }
 
-            if (availableCastles.queenSide && validateCastle(piece, 'king', board)) {
-                possibleMoves.push({
-                    startingSquare: piece.position,
-                    targetSquare: {rank: piece.position.rank, file: piece.position.file + 2},
-                    capture: null,
-                    piece: piece.type
-                });
-            }
+        if (availableCastles.queenSide && validateCastle(piece, 'king', board)) {
+            possibleMoves.push({
+                startingSquare: piece.position,
+                targetSquare: {rank: piece.position.rank, file: piece.position.file + 2},
+                capture: null,
+                piece: piece.type
+            });
         }
     }
 
