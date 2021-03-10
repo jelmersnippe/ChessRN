@@ -1,17 +1,17 @@
 import {ActionType, createAction} from 'typesafe-actions';
-import {BoardData, Color} from '../../constants/piece';
-import {PieceData, Position} from '../../components/Piece/PieceData';
+import {Color} from '../../constants/piece';
+import {Position} from '../../components/Piece/PieceData';
 import {CheckedState} from '../../utils/pieceMovement';
 import {Move} from '../../utils/moveGeneration';
-import {CastlingAvailability} from './types';
+import {BoardState, CastlingAvailability} from './types';
 
 export const setInitialStateAction = createAction(
     'SET_INITIAL_STATE'
 )<string>();
 
-export const setBoardAction = createAction(
-    'SET_BOARD'
-)<BoardData>();
+export const setGameStateAction = createAction(
+    'SET_GAME_STATE'
+)<BoardState>();
 
 export const setActiveColorAction = createAction(
     'SET_ACTIVE_COLOR'
@@ -27,7 +27,7 @@ export const increaseTurnsAction = createAction(
 
 export const commitMovementAction = createAction(
     'COMMIT_MOVEMENT'
-)<{ piece: PieceData, position: Position }>();
+)<Move>();
 
 export const calculatePossibleMovesAction = createAction(
     'CALCULATE_POSSIBLE_MOVES'
@@ -51,7 +51,7 @@ export const setEnPassantAction = createAction(
 
 export type BoardActionTypes =
     ActionType<typeof setActiveColorAction> |
-    ActionType<typeof setBoardAction> |
+    ActionType<typeof setGameStateAction> |
     ActionType<typeof setChecksAction> |
     ActionType<typeof setPossibleMovesAction> |
     ActionType<typeof calculatePossibleMovesAction> |

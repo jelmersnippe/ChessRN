@@ -125,7 +125,15 @@ const Board: FunctionComponent = () => {
             return;
         }
 
-        dispatch(commitMovementAction({piece: selectedPiece, position: {rank, file}}));
+        const moveToMake = possibleMoves[activeColor].find((move) =>
+            isEqual(move.targetSquare, {rank, file}) &&
+            isEqual(move.startingSquare, selectedPiece.position));
+
+        if (!moveToMake) {
+            throw new Error('Tried to make move that is not in possibleMoves');
+        }
+
+        dispatch(commitMovementAction(moveToMake));
         setSelectedPiece(null);
         setPossibleMovesForSelectedPiece(null);
     };

@@ -1,9 +1,9 @@
-import {PieceData, Position} from '../components/Piece/PieceData';
+import {PieceData} from '../components/Piece/PieceData';
 import {BoardData, Color, PieceType} from '../constants/piece';
-import store from '../config/store';
 import {Move} from './moveGeneration';
 import isEqual from 'lodash.isequal';
 import {checkSquare, validateCastle} from './movementValidation';
+import {BoardState} from '../reducers/board/types';
 
 export enum CheckedState {
     CHECK = 'Check',
@@ -11,20 +11,20 @@ export enum CheckedState {
     STALEMATE = 'Stalemate'
 }
 
-export const calculatePossibleMoves = (piece: PieceData, board: BoardData, enPassant: Position | undefined): Array<Move> => {
+export const calculatePossibleMoves = (piece: PieceData, gameState: BoardState): Array<Move> => {
     switch (piece.type) {
         case PieceType.KING:
-            return kingMovement(piece, board);
+            return kingMovement(piece, gameState);
         case PieceType.QUEEN:
-            return slidingMovement(piece, board, (rankDelta, fileDelta) => !(rankDelta === 0 && fileDelta === 0));
+            return slidingMovement(piece, gameState.board, (rankDelta, fileDelta) => !(rankDelta === 0 && fileDelta === 0));
         case PieceType.KNIGHT:
-            return knightMovement(piece, board);
+            return knightMovement(piece, gameState.board);
         case PieceType.ROOK:
-            return slidingMovement(piece, board, (rankDelta, fileDelta) => Math.abs(rankDelta) !== Math.abs(fileDelta));
+            return slidingMovement(piece, gameState.board, (rankDelta, fileDelta) => Math.abs(rankDelta) !== Math.abs(fileDelta));
         case PieceType.BISHOP:
-            return slidingMovement(piece, board, (rankDelta, fileDelta) => rankDelta !== 0 && fileDelta !== 0);
+            return slidingMovement(piece, gameState.board, (rankDelta, fileDelta) => rankDelta !== 0 && fileDelta !== 0);
         case PieceType.PAWN:
-            return pawnMovement(piece, board, enPassant);
+            return pawnMovement(piece, gameState);
     }
 };
 
@@ -123,7 +123,7 @@ const knightMovement = (piece: PieceData, board: BoardData): Array<Move> => {
     return possibleMoves;
 };
 
-const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
+const kingMovement = (piece: PieceData, gameState: BoardState): Array<Move> => {
     const possibleMoves: Array<Move> = [];
 
     for (let rank = piece.position.rank - 1; rank <= piece.position.rank + 1; rank++) {
@@ -146,7 +146,7 @@ const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
             const move = checkSquare({
                 rank,
                 file
-            }, piece.color, board);
+            }, piece.color, gameState.board);
 
             if (move.valid) {
                 possibleMoves.push({
@@ -159,12 +159,11 @@ const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
         }
     }
 
-    // TODO: pass these as parameters by passing the state from the calculate possible moves epic
-    const isChecked = store.getState().board.checks[piece.color];
-    const availableCastles = store.getState().board.castlesAvailable[piece.color];
+    const isChecked = gameState.checks[piece.color];
+    const availableCastles = gameState.castlesAvailable[piece.color];
 
     if (!isChecked && piece.timesMoved === 0 && (availableCastles.kingSide || availableCastles.queenSide)) {
-        if (availableCastles.queenSide && validateCastle(piece, 'queen', board)) {
+        if (availableCastles.queenSide && validateCastle(piece, 'queen', gameState.board)) {
             possibleMoves.push({
                 startingSquare: piece.position,
                 targetSquare: {rank: piece.position.rank, file: piece.position.file - 2},
@@ -173,7 +172,7 @@ const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
             });
         }
 
-        if (availableCastles.queenSide && validateCastle(piece, 'king', board)) {
+        if (availableCastles.kingSide && validateCastle(piece, 'king', gameState.board)) {
             possibleMoves.push({
                 startingSquare: piece.position,
                 targetSquare: {rank: piece.position.rank, file: piece.position.file + 2},
@@ -186,7 +185,7 @@ const kingMovement = (piece: PieceData, board: BoardData): Array<Move> => {
     return possibleMoves;
 };
 
-const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | undefined): Array<Move> => {
+const pawnMovement = (piece: PieceData, gameState: BoardState): Array<Move> => {
     const possibleMoves: Array<Move> = [];
 
     const rankDelta = piece.color === Color.WHITE ? -1 : 1;
@@ -199,13 +198,13 @@ const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | 
     for (let fileDelta = -1; fileDelta <= 1; fileDelta++) {
         if (piece.position.file + fileDelta >= 0 && piece.position.file + fileDelta < 8) {
             const targetSquare = {rank: piece.position.rank + rankDelta, file: piece.position.file + fileDelta};
-            const move = checkSquare(targetSquare, piece.color, board);
+            const move = checkSquare(targetSquare, piece.color, gameState.board);
 
-            if (enPassant && isEqual(enPassant, targetSquare)) {
+            if (gameState.enPassant && isEqual(gameState.enPassant, targetSquare)) {
                 possibleMoves.push({
                     startingSquare: piece.position,
                     targetSquare: targetSquare,
-                    capture: board[targetSquare.rank][targetSquare.file],
+                    capture: gameState.board[piece.position.rank][targetSquare.file],
                     piece: piece.type
                 });
             }
@@ -222,7 +221,7 @@ const pawnMovement = (piece: PieceData, board: BoardData, enPassant: Position | 
                 // Check if a double push is possible
                 if (piece.timesMoved === 0 && fileDelta === 0) {
                     const doublePushTargetSquare = {rank: piece.position.rank + (rankDelta * 2), file: piece.position.file};
-                    const doublePushMove = checkSquare(doublePushTargetSquare, piece.color, board);
+                    const doublePushMove = checkSquare(doublePushTargetSquare, piece.color, gameState.board);
                     if (doublePushMove.valid && !doublePushMove.capture) {
                         possibleMoves.push({
                             startingSquare: piece.position,

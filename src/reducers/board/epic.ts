@@ -5,21 +5,19 @@ import {
     commitMovementAction,
     increaseTurnsAction,
     setActiveColorAction,
-    setBoardAction,
     setCastlingAvailabilityAction,
     setChecksAction,
-    setEnPassantAction,
+    setGameStateAction,
     setInitialStateAction,
     setPossibleMovesAction
 } from './actions';
-import {filter, map, mergeMap} from 'rxjs/operators';
+import {filter, map, mapTo, mergeMap} from 'rxjs/operators';
 import {RootState} from '../../config/store';
 import {isActionOf} from 'typesafe-actions';
 import {Color, PieceType} from '../../constants/piece';
 import {of} from 'rxjs';
-import {createDuplicateBoard, createPiecesListFromBoard} from '../../utils/fen';
-import {generateLegalMoves} from '../../utils/moveGeneration';
-import isEqual from 'lodash.isequal';
+import {createPiecesListFromBoard} from '../../utils/fen';
+import {generateLegalMoves, makeMove} from '../../utils/moveGeneration';
 import {anyCastlesAvailable, getCastlingAvailability, getCheckedStatus, isChecked} from '../../utils/movementValidation';
 import {CastlingAvailability} from './types';
 import {getOppositeColor} from '../../utils/conversions';
@@ -30,7 +28,7 @@ const setInitialStateEpic: Epic = (action$, state$: StateObservable<RootState>) 
 );
 
 const setBoardEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
-    filter(isActionOf(setBoardAction)),
+    filter(isActionOf(setGameStateAction)),
     mergeMap(() => of(
         checkCastlingAvailabilityAction(),
         setActiveColorAction(getOppositeColor(state$.value.board.activeColor))
@@ -39,11 +37,13 @@ const setBoardEpic: Epic = (action$, state$: StateObservable<RootState>) => acti
 
 const increaseTurnsEpic: Epic = (action$) => action$.pipe(
     filter(isActionOf(setActiveColorAction)),
-    // filter((action) => action.payload === Color.WHITE),
-    mergeMap((action) => of(
-        calculatePossibleMovesAction(action.payload),
-        increaseTurnsAction()
-    ))
+    filter((action) => action.payload === Color.WHITE),
+    mapTo(increaseTurnsAction())
+);
+
+const calculatePossibleMovesEpic: Epic = (action$) => action$.pipe(
+    filter(isActionOf(setActiveColorAction)),
+    map((action) => calculatePossibleMovesAction(action.payload))
 );
 
 const updatePossibleMovesEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
@@ -110,57 +110,10 @@ const checkCastlingAvailabilityEpic: Epic = (action$, state$: StateObservable<Ro
 const commitMovementEpic: Epic = (action$, state$: StateObservable<RootState>) => action$.pipe(
     filter(isActionOf(commitMovementAction)),
     filter(() => state$.value.board.board !== null),
-    filter((action) => state$.value.board.possibleMoves[state$.value.board.activeColor].some((move) => isEqual(move.targetSquare, action.payload.position) && isEqual(move.startingSquare, action.payload.piece.position))),
-    mergeMap((action) => {
-        const {board, enPassant} = state$.value.board;
-        const {piece, position} = action.payload;
+    map((action) => {
+        const updatedGameState = makeMove(state$.value.board, action.payload);
 
-        if (!board) {
-            throw new Error('No board');
-        }
-
-        const updatedBoard = createDuplicateBoard(board);
-
-        const oldPosition = {rank: piece.position.rank, file: piece.position.file};
-        updatedBoard[piece.position.rank][piece.position.file] = null;
-        updatedBoard[position.rank][position.file] = piece;
-
-        piece.timesMoved++;
-        piece.position = {rank: position.rank, file: position.file};
-
-        // TODO: These have to be taken into account when calculating movement
-        // Currently you can capture a pawn in En Passant and put your own king in check, which is illegal
-
-        // Castle move
-        if (piece.type === PieceType.KING && Math.abs(oldPosition.file - position.file) > 1) {
-            const currentRookFile = position.file < 4 ? 0 : 7;
-            const rook = updatedBoard[position.rank][currentRookFile];
-
-            if (!rook) {
-                throw new Error('Tried to castle without a rook');
-            }
-
-            const newRookFile = position.file < 4 ? position.file + 1 : position.file - 1;
-
-            updatedBoard[position.rank][currentRookFile] = null;
-            updatedBoard[position.rank][newRookFile] = rook;
-            rook.timesMoved++;
-            rook.position = {rank: position.rank, file: newRookFile};
-        }
-
-        // En passant
-        if (piece.type === PieceType.PAWN && enPassant && position.rank === enPassant.rank && position.file === enPassant.file) {
-            updatedBoard[oldPosition.rank][position.file] = null;
-        }
-
-        return of(
-            setBoardAction([...updatedBoard]),
-            calculatePossibleMovesAction(piece.color),
-            setEnPassantAction((piece.type === PieceType.PAWN && Math.abs(oldPosition.rank - position.rank) > 1) ? {
-                rank: position.rank + Math.sign(oldPosition.rank - position.rank),
-                file: position.file
-            } : undefined)
-        );
+        return setGameStateAction(updatedGameState);
     })
 );
 
@@ -171,7 +124,8 @@ const boardEpic: Epic = combineEpics(
     updatePossibleMovesEpic,
     validateChecksEpic,
     checkCastlingAvailabilityEpic,
-    commitMovementEpic
+    commitMovementEpic,
+    calculatePossibleMovesEpic
 );
 
 export default boardEpic;

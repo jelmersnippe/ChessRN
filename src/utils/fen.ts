@@ -51,6 +51,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 import {BoardData, Color, PieceType, RankData} from '../constants/piece';
 import {PieceData} from '../components/Piece/PieceData';
 import {BoardState, CastlingAvailability} from '../reducers/board/types';
+import {pieceToColor, pieceToType} from './conversions';
 
 const fenPieces = {
     p: 'Pawn',
@@ -106,27 +107,6 @@ export const createDuplicateBoard = (board: BoardData): BoardData => {
                 : null;
         })
     );
-};
-
-const pieceToColor = (piece: string) => piece === piece.toUpperCase() ? Color.WHITE : Color.BLACK;
-
-const pieceToType = (piece: string): PieceType => {
-    switch (piece.toLowerCase()) {
-        case 'k':
-            return PieceType.KING;
-        case 'q':
-            return PieceType.QUEEN;
-        case 'r':
-            return PieceType.ROOK;
-        case 'b':
-            return PieceType.BISHOP;
-        case 'n':
-            return PieceType.KNIGHT;
-        case 'p':
-            return PieceType.PAWN;
-        default:
-            throw new Error('unrecognized piece');
-    }
 };
 
 const parseFenBoard = (fenBoard: string): BoardData => {
